@@ -1,0 +1,425 @@
+<Page x:Class="AgentsAnywhere.Mobile.MainPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ui="using:AgentsAnywhere.Mobile.Ui" Background="{StaticResource PageBrush}">
+ <Page.Resources>
+  <ui:VisibleIf x:Key="Vis"/>
+  <ui:StepVisual x:Key="Step"/>
+  <ui:RowVisual x:Key="Row"/>
+  <ui:ToneVisual x:Key="Tone"/>
+  <CollectionViewSource x:Key="SessionSource" IsSourceGrouped="True"/>
+
+  <Style x:Key="FlatItem" TargetType="ListViewItem">
+   <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="12,7"/><Setter Property="MinHeight" Value="0"/>
+  </Style>
+  <!-- Terminal rows: no padding or selection chrome so the character grid stays aligned. -->
+  <Style x:Key="TerminalLineItem" TargetType="ListViewItem">
+   <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="0"/><Setter Property="MinHeight" Value="0"/>
+  </Style>
+  <!-- Session list: left colour bar carries the state, like the system Mail app. -->
+  <DataTemplate x:Key="SessionTemplate">
+   <Grid Padding="0,8,0,10">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <Border Background="{Binding Tone, Converter={StaticResource Tone}, ConverterParameter=bar}"/>
+    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <TextBlock Text="{Binding Name}" FontSize="17" TextTrimming="CharacterEllipsis"/>
+      <TextBlock Grid.Column="1" Text="{Binding Time}" Style="{StaticResource Caption}" Margin="8,0,0,0" VerticalAlignment="Bottom"/>
+     </Grid>
+     <TextBlock Text="{Binding Detail}" FontSize="14" Foreground="{StaticResource MidBrush}" TextTrimming="CharacterEllipsis" Visibility="{Binding Detail, Converter={StaticResource Vis}}"/>
+     <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+      <ProgressRing IsActive="{Binding IsRunning}" Width="16" Height="16" Foreground="{StaticResource AccentTextBrush}" Margin="0,0,6,0" Visibility="{Binding IsRunning, Converter={StaticResource Vis}}"/>
+      <TextBlock Text="{Binding Source}" FontSize="12" Foreground="{Binding Tone, Converter={StaticResource Tone}}" TextTrimming="CharacterEllipsis"/>
+     </StackPanel>
+    </StackPanel>
+   </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="EntityRowTemplate">
+   <Button Style="{StaticResource RowButton}" Tag="{Binding}" Click="Entity_Click">
+    <StackPanel><TextBlock Text="{Binding Name}" FontSize="15" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Subtitle}" Style="{StaticResource Caption}" FontSize="13"/></StackPanel>
+   </Button>
+  </DataTemplate>
+
+  <!-- Timeline: one template per message type. -->
+  <DataTemplate x:Key="UserTemplate">
+   <StackPanel HorizontalAlignment="Right" MaxWidth="320" Margin="40,0,6,0">
+    <ItemsControl ItemsSource="{Binding Attachments}" HorizontalAlignment="Right" Margin="0,0,0,4" Visibility="{Binding HasAttachments, Converter={StaticResource Vis}}">
+     <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+     <ItemsControl.ItemTemplate><DataTemplate><Border Background="{StaticResource ChromeMidBrush}" Padding="8,5" Margin="4,0,0,0"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" Style="{StaticResource Glyph}" FontSize="12" Margin="0,0,6,0"/><TextBlock Text="{Binding}" FontSize="13"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate>
+    </ItemsControl>
+    <Border Background="{StaticResource AccentBrush}" Padding="10,8"><TextBlock Text="{Binding Text}" TextWrapping="Wrap" IsTextSelectionEnabled="True" FontSize="15" Foreground="White" LineHeight="23"/></Border>
+    <Polygon Points="0,0 12,0 12,9" Fill="{StaticResource AccentBrush}" HorizontalAlignment="Right" Margin="0,0,12,0"/>
+    <TextBlock Text="{Binding Meta}" Style="{StaticResource Caption}" HorizontalAlignment="Right"/>
+   </StackPanel>
+  </DataTemplate>
+
+  <DataTemplate x:Key="StepTemplate">
+   <Grid Background="Transparent" Tapped="Step_Tapped">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+     <Border Width="20" Height="20" Background="{Binding Converter={StaticResource Step}, ConverterParameter=bg}" BorderBrush="{Binding Converter={StaticResource Step}, ConverterParameter=border}" BorderThickness="1" CornerRadius="{Binding Converter={StaticResource Step}, ConverterParameter=corner}">
+      <Grid>
+       <TextBlock Text="{Binding Converter={StaticResource Step}, ConverterParameter=glyph}" Style="{StaticResource Glyph}" FontSize="10" HorizontalAlignment="Center" Foreground="{Binding Converter={StaticResource Step}, ConverterParameter=fg}"/>
+       <Rectangle Width="8" Height="8" Fill="{StaticResource AccentBrush}" Visibility="{Binding Converter={StaticResource Step}, ConverterParameter=dot}"/>
+      </Grid>
+     </Border>
+     <Rectangle Grid.Row="1" Width="1" Fill="{StaticResource LowBrush}" Margin="0,3" Visibility="{Binding Converter={StaticResource Step}, ConverterParameter=line}"/>
+    </Grid>
+    <StackPanel Grid.Column="1" Margin="10,0,0,12">
+     <Grid MinHeight="20" Visibility="{Binding Converter={StaticResource Step}, ConverterParameter=head}">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <TextBlock Text="{Binding Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontFamily="{Binding Converter={StaticResource Step}, ConverterParameter=titlefont}" FontSize="{Binding Converter={StaticResource Step}, ConverterParameter=titlesize}" Foreground="{Binding Converter={StaticResource Step}, ConverterParameter=titlefg}"/>
+      <TextBlock Grid.Column="1" Text="{Binding Converter={StaticResource Step}, ConverterParameter=status}" Style="{StaticResource Glyph}" FontSize="12" Margin="8,0,0,0" Foreground="{Binding Converter={StaticResource Step}, ConverterParameter=statusfg}"/>
+      <ProgressRing Grid.Column="1" IsActive="True" Width="18" Height="18" Foreground="{StaticResource ThinkBrush}" Margin="8,0,0,0" Visibility="{Binding Converter={StaticResource Step}, ConverterParameter=running}"/>
+     </Grid>
+     <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Caption}" Visibility="{Binding Converter={StaticResource Step}, ConverterParameter=sub}"/>
+     <TextBlock Text="{Binding Body}" FontSize="13" FontStyle="Italic" Foreground="{StaticResource SoftTextBrush}" TextWrapping="Wrap" LineHeight="20" MaxLines="{Binding Converter={StaticResource Step}, ConverterParameter=lines}" TextTrimming="CharacterEllipsis" IsTextSelectionEnabled="{Binding Expanded}" Visibility="{Binding Converter={StaticResource Step}, ConverterParameter=think}"/>
+     <TextBlock Text="{Binding Body}" FontSize="14" TextWrapping="Wrap" LineHeight="22" IsTextSelectionEnabled="True" Visibility="{Binding Converter={StaticResource Step}, ConverterParameter=note}"/>
+     <Border Background="{StaticResource CodeBrush}" Margin="0,6,0,0" Visibility="{Binding ShowOutput, Converter={StaticResource Vis}}">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" HorizontalScrollMode="Auto" VerticalScrollBarVisibility="Disabled" VerticalScrollMode="Disabled" Padding="8,6">
+       <TextBlock Text="{Binding Body}" FontFamily="{StaticResource MonoFont}" FontSize="12" Foreground="#DADADA" IsTextSelectionEnabled="True"/>
+      </ScrollViewer>
+     </Border>
+    </StackPanel>
+   </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="ProcessTemplate">
+   <Border Background="{StaticResource ChromeLowBrush}">
+    <StackPanel>
+     <Grid MinHeight="44" Padding="12,0" Background="Transparent" Tapped="ProcessHeader_Tapped">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <ProgressRing IsActive="{Binding Running}" Width="20" Height="20" Foreground="{StaticResource AccentTextBrush}" Visibility="{Binding Running, Converter={StaticResource Vis}}"/>
+      <TextBlock Text="{Binding Converter={StaticResource Row}, ConverterParameter=glyph}" Style="{StaticResource Glyph}" FontSize="14" Foreground="{Binding Converter={StaticResource Row}, ConverterParameter=glyphfg}" Visibility="{Binding Running, Converter={StaticResource Vis}, ConverterParameter=not}"/>
+      <TextBlock Grid.Column="1" Text="过程" FontSize="15" Margin="10,0" VerticalAlignment="Center"/>
+      <TextBlock Grid.Column="2" Text="{Binding Summary}" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
+      <TextBlock Grid.Column="3" Text="{Binding Converter={StaticResource Row}, ConverterParameter=chevron}" Style="{StaticResource Glyph}" FontSize="11" Foreground="{StaticResource MidBrush}" Margin="8,0,0,0"/>
+     </Grid>
+     <ItemsControl ItemsSource="{Binding Steps}" ItemTemplate="{StaticResource StepTemplate}" Margin="12,2,12,0" Visibility="{Binding Converter={StaticResource Row}, ConverterParameter=steps}"/>
+    </StackPanel>
+   </Border>
+  </DataTemplate>
+
+  <DataTemplate x:Key="OutputTemplate">
+   <StackPanel>
+    <TextBlock Text="{Binding Meta}" Style="{StaticResource Caption}" Margin="0,0,0,3"/>
+    <StackPanel ui:Markdown.Text="{Binding Text}"/>
+    <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Visibility="{Binding HasFooter, Converter={StaticResource Vis}}">
+     <TextBlock Text="&#xE73E;" Style="{StaticResource Glyph}" FontSize="12" Foreground="{StaticResource OkBrush}" Margin="0,0,6,0"/>
+     <TextBlock Text="{Binding Footer}" Style="{StaticResource Caption}"/>
+    </StackPanel>
+   </StackPanel>
+  </DataTemplate>
+
+  <DataTemplate x:Key="MarkerTemplate">
+   <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <Rectangle Height="1" Fill="{StaticResource LowBrush}" VerticalAlignment="Center"/>
+    <TextBlock Grid.Column="1" Text="{Binding Text}" Style="{StaticResource Caption}" Margin="10,0" MaxWidth="260"/>
+    <Rectangle Grid.Column="2" Height="1" Fill="{StaticResource LowBrush}" VerticalAlignment="Center"/>
+   </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="ErrorTemplate">
+   <Border Background="{StaticResource ChromeLowBrush}" BorderBrush="{StaticResource ErrBrush}" BorderThickness="4,0,0,0" Padding="12,8">
+    <TextBlock Text="{Binding Text}" FontSize="13" Foreground="{StaticResource ErrTextBrush}" TextWrapping="Wrap" IsTextSelectionEnabled="True"/>
+   </Border>
+  </DataTemplate>
+
+  <DataTemplate x:Key="NoticeTemplate">
+   <Border Background="{StaticResource ChromeBrush}" BorderBrush="{StaticResource WarnBrush}" BorderThickness="4,0,0,0" Padding="12,10">
+    <StackPanel>
+     <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE83D;" Style="{StaticResource Glyph}" Foreground="{StaticResource WarnBrush}" Margin="0,0,8,0"/><TextBlock Text="等待你处理" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource WarnBrush}"/></StackPanel>
+     <TextBlock Text="{Binding Text}" FontSize="15" TextWrapping="Wrap" Margin="0,4,0,0"/>
+     <TextBlock Text="{Binding Meta}" Style="{StaticResource Muted}" Visibility="{Binding HasMeta, Converter={StaticResource Vis}}"/>
+     <TextBlock Text="{Binding Detail}" FontFamily="{StaticResource MonoFont}" FontSize="12" Foreground="{StaticResource MidBrush}" TextWrapping="Wrap" Margin="0,2,0,0" Visibility="{Binding HasDetail, Converter={StaticResource Vis}}"/>
+     <Button Content="查看并处理" Tag="{Binding}" Click="Notice_Click" Margin="0,10,0,0"/>
+    </StackPanel>
+   </Border>
+  </DataTemplate>
+
+  <ui:TimelineTemplateSelector x:Key="TimelineSelector" User="{StaticResource UserTemplate}" Process="{StaticResource ProcessTemplate}" Output="{StaticResource OutputTemplate}" Marker="{StaticResource MarkerTemplate}" Error="{StaticResource ErrorTemplate}" Notice="{StaticResource NoticeTemplate}"/>
+
+  <DataTemplate x:Key="FileTemplate">
+   <Grid MinHeight="52">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <TextBlock Text="{Binding Glyph}" Style="{StaticResource Glyph}" FontSize="20" HorizontalAlignment="Center" Foreground="{Binding GlyphBrush}"/>
+    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"><TextBlock Text="{Binding Name}" FontSize="15" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Subtitle}" Style="{StaticResource Caption}"/></StackPanel>
+    <Button Grid.Column="2" Tag="{Binding}" Click="FileDownload_Click" Style="{StaticResource IconButton}" Content="&#xE896;" Foreground="{StaticResource AccentTextBrush}" Visibility="{Binding IsDirectory, Converter={StaticResource Vis}, ConverterParameter=not}" AutomationProperties.Name="下载文件"/>
+   </Grid>
+  </DataTemplate>
+ </Page.Resources>
+
+ <Grid x:Name="Root">
+  <!-- ========== 根页面：会话 / 设备 / 我的 ========== -->
+  <Grid x:Name="HomeView" Visibility="Collapsed">
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <TextBlock Text="AGENTS ANYWHERE" Style="{StaticResource AppTitle}" Margin="16,12,16,0"/>
+   <Pivot x:Name="HomePivot" Grid.Row="1" SelectionChanged="HomePivot_Changed">
+    <PivotItem Header="会话" Margin="0">
+     <Grid>
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <Grid Margin="12,0,12,4">
+       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+       <ComboBox x:Name="ProjectBox" DisplayMemberPath="Name" HorizontalAlignment="Stretch" SelectionChanged="Filter_Changed" AutomationProperties.Name="项目" Margin="0,0,4,0"/>
+       <ComboBox x:Name="DeviceBox" Grid.Column="1" DisplayMemberPath="Name" HorizontalAlignment="Stretch" SelectionChanged="Filter_Changed" AutomationProperties.Name="设备" Margin="4,0,0,0"/>
+      </Grid>
+      <TextBox x:Name="SearchBox" Grid.Row="1" PlaceholderText="搜索会话" TextChanged="Search_Changed" Margin="12,4" Visibility="Collapsed" AutomationProperties.Name="搜索会话"/>
+      <ListView x:Name="SessionList" Grid.Row="2" ItemsSource="{Binding Source={StaticResource SessionSource}}" ItemTemplate="{StaticResource SessionTemplate}" SelectionMode="None" IsItemClickEnabled="True" ItemClick="Session_Click">
+       <ListView.ItemContainerStyle><Style TargetType="ListViewItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="8,0,12,0"/></Style></ListView.ItemContainerStyle>
+       <ListView.GroupStyle><GroupStyle HidesIfEmpty="True"><GroupStyle.HeaderTemplate><DataTemplate><TextBlock Text="{Binding Key}" FontSize="15" FontWeight="SemiBold" Foreground="{Binding Tone, Converter={StaticResource Tone}, ConverterParameter=head}"/></DataTemplate></GroupStyle.HeaderTemplate></GroupStyle></ListView.GroupStyle>
+      </ListView>
+      <TextBlock x:Name="EmptySessions" Grid.Row="2" Text="还没有会话。先在工作设备上安装官方桌面客户端并登录同一个账号，再点下方的“新建”创建会话。" Style="{StaticResource Muted}" FontSize="15" Margin="12,16" Visibility="Collapsed"/>
+     </Grid>
+    </PivotItem>
+    <PivotItem Header="设备" Margin="0">
+     <ScrollViewer><StackPanel Padding="0,0,0,16">
+      <ItemsControl x:Name="DeviceList">
+       <ItemsControl.ItemTemplate><DataTemplate>
+        <Button Style="{StaticResource RowButton}" Tag="{Binding}" Click="Device_Click">
+         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <TextBlock Text="&#xE977;" Style="{StaticResource Glyph}" FontSize="20" Foreground="{StaticResource AccentTextBrush}" Opacity="{Binding Opacity}"/>
+          <StackPanel Grid.Column="1" Margin="12,0,0,0" Opacity="{Binding Opacity}"><TextBlock Text="{Binding Name}" FontSize="15"/><TextBlock Text="{Binding Detail}" Style="{StaticResource Caption}" FontSize="13"/></StackPanel>
+         </Grid>
+        </Button>
+       </DataTemplate></ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <TextBlock Text="项目" Style="{StaticResource SectionTitle}"/>
+      <ItemsControl x:Name="ProjectList" ItemTemplate="{StaticResource EntityRowTemplate}"/>
+      <TextBlock Text="工作设备需要运行官方桌面客户端或 Connector，并登录同一账号。Agent 在工作设备上执行。" Style="{StaticResource Muted}" Margin="12,16,12,0"/>
+     </StackPanel></ScrollViewer>
+    </PivotItem>
+    <PivotItem Header="我的" Margin="0">
+     <ScrollViewer><StackPanel Padding="0,0,0,20">
+      <Grid Margin="12,4,12,8"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+       <Ellipse Width="56" Height="56" Fill="{StaticResource AccentBrush}"/><TextBlock Text="&#xE77B;" Style="{StaticResource Glyph}" FontSize="22" HorizontalAlignment="Center"/>
+       <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center"><TextBlock x:Name="AccountLabel" FontSize="20" FontWeight="Light" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="ServerLabel" Style="{StaticResource Caption}" FontSize="13"/></StackPanel>
+      </Grid>
+      <Grid Margin="12,8" MinHeight="44"><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+       <TextBlock Text="&#xE701;" Style="{StaticResource Glyph}" FontSize="20" Foreground="{StaticResource AccentTextBrush}"/>
+       <StackPanel Grid.Column="1" Margin="12,0,0,0"><TextBlock Text="实时连接" FontSize="15"/><TextBlock x:Name="RealtimeLabel" Style="{StaticResource Caption}" FontSize="13" Text="尚未连接"/></StackPanel>
+      </Grid>
+      <Button Style="{StaticResource RowButton}" Click="Diagnostics_Click"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="&#xEBE8;" Style="{StaticResource Glyph}" FontSize="20" Foreground="{StaticResource AccentTextBrush}"/><StackPanel Grid.Column="1" Margin="12,0,0,0"><TextBlock Text="调试日志" FontSize="15"/><TextBlock Text="已脱敏，不含账号、密码和令牌" Style="{StaticResource Caption}" FontSize="13"/></StackPanel></Grid></Button>
+      <Button Style="{StaticResource RowButton}" Click="Help_Click"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="&#xE897;" Style="{StaticResource Glyph}" FontSize="20" Foreground="{StaticResource AccentTextBrush}"/><TextBlock Grid.Column="1" Margin="12,0,0,0" Text="使用文档" FontSize="15" VerticalAlignment="Center"/></Grid></Button>
+      <Button Style="{StaticResource RowButton}" Click="License_Click"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="&#xE946;" Style="{StaticResource Glyph}" FontSize="20" Foreground="{StaticResource AccentTextBrush}"/><StackPanel Grid.Column="1" Margin="12,0,0,0"><TextBlock Text="关于与许可证" FontSize="15"/><TextBlock x:Name="VersionLabel" Style="{StaticResource Caption}" FontSize="13"/></StackPanel></Grid></Button>
+      <Button Content="退出登录" Click="SignOut_Click" Margin="12,16,12,0"/>
+     </StackPanel></ScrollViewer>
+    </PivotItem>
+   </Pivot>
+   <CommandBar x:Name="HomeBar" Grid.Row="2">
+    <AppBarButton x:Name="NewSessionButton" Icon="Add" Label="新建会话" Click="NewSession_Click"/>
+    <AppBarButton x:Name="SearchButton" Icon="Find" Label="搜索" Click="Search_Click"/>
+    <AppBarButton Icon="Refresh" Label="刷新" Click="Refresh_Click"/>
+    <CommandBar.SecondaryCommands>
+     <AppBarButton Label="新建项目" Click="NewProject_Click"/>
+     <AppBarToggleButton x:Name="ArchiveCheck" Label="显示已归档" Checked="Archive_Changed" Unchecked="Archive_Changed"/>
+    </CommandBar.SecondaryCommands>
+   </CommandBar>
+  </Grid>
+
+  <!-- ========== 新建对话：先选项目 / Agent / 模型，再进入对话页写第一条消息 ========== -->
+  <Grid x:Name="NewSessionView" Visibility="Collapsed">
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <TextBlock Text="新建对话" Style="{StaticResource AppTitle}" Margin="16,12,16,0"/>
+   <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
+    <StackPanel Padding="16,4,16,16">
+     <ComboBox x:Name="NewProjectBox" Header="项目" DisplayMemberPath="Name" HorizontalAlignment="Stretch" SelectionChanged="NewProject_Changed" AutomationProperties.Name="项目"/>
+     <ComboBox x:Name="NewRuntimeBox" Header="Agent" DisplayMemberPath="Name" HorizontalAlignment="Stretch" Margin="0,12,0,0" SelectionChanged="NewRuntime_Changed" AutomationProperties.Name="Agent"/>
+     <ComboBox x:Name="NewModelBox" Header="模型" DisplayMemberPath="Name" HorizontalAlignment="Stretch" Margin="0,12,0,0" AutomationProperties.Name="模型"/>
+     <TextBox x:Name="NewTitleBox" Header="会话名称（可选）" MaxLength="120" Margin="0,12,0,0"/>
+     <TextBlock x:Name="NewSessionHint" Style="{StaticResource Muted}" FontSize="14" TextWrapping="Wrap" Margin="0,12,0,0" Text="选择项目和 Agent 后进入对话页，发送第一条消息才会真正创建会话。"/>
+     <TextBlock x:Name="NewSessionError" Foreground="{StaticResource ErrTextBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+    </StackPanel>
+   </ScrollViewer>
+    <!-- A plain button, not an AppBarButton in a Minimal CommandBar: those report IsEnabled=False while the bar is closed, which hid the only action of this page. -->
+    <Button Grid.Row="2" x:Name="NewSessionStartButton" Content="进入对话" Style="{StaticResource AccentButton}" HorizontalAlignment="Stretch" Margin="16,8,16,16" Click="NewSessionStart_Click" IsEnabled="False" AutomationProperties.Name="进入对话"/>
+  </Grid>
+
+  <!-- ========== 会话页：对话 / 文件 / 终端 ========== -->
+  <Grid x:Name="SessionView" Visibility="Collapsed">
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <StackPanel Orientation="Horizontal" Margin="16,12,16,0">
+    <TextBlock x:Name="SessionTitle" Style="{StaticResource AppTitle}" MaxWidth="210"/>
+    <TextBlock x:Name="SessionSubtitle" FontSize="13" Foreground="{StaticResource MidBrush}" Margin="8,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="150"/>
+   </StackPanel>
+   <Pivot x:Name="Tabs" Grid.Row="1" SelectionChanged="Tab_Changed">
+    <PivotItem Header="对话" Margin="0">
+     <Grid>
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <ProgressBar x:Name="RunProgress" IsIndeterminate="True" Visibility="Collapsed" Margin="0" Background="Transparent"/>
+      <ListView x:Name="TimelineList" Grid.Row="1" ItemTemplateSelector="{StaticResource TimelineSelector}" ItemContainerStyle="{StaticResource FlatItem}" SelectionMode="None" IsItemClickEnabled="False">
+       <ListView.Header><Button x:Name="HistoryButton" Content="加载更早的消息" Click="History_Click" Visibility="Collapsed" HorizontalAlignment="Center" Background="Transparent" Foreground="{StaticResource AccentTextBrush}" Margin="0,6,0,0"/></ListView.Header>
+       <ListView.Footer><Border Height="12"/></ListView.Footer>
+      </ListView>
+      <TextBlock x:Name="TimelineEmpty" Grid.Row="1" Text="选择会话后即可查看消息、回复请求和继续任务。" Style="{StaticResource Muted}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Margin="24"/>
+      <Button x:Name="BottomButton" Grid.Row="1" Style="{StaticResource IconButton}" Content="&#xE74B;" Foreground="{StaticResource AccentTextBrush}" Background="{StaticResource ChromeBrush}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" Width="44" Height="44" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,14,12" Visibility="Collapsed" Click="Bottom_Click" AutomationProperties.Name="回到底部"/>
+      <StackPanel Grid.Row="2" Background="{StaticResource ChromeBrush}" Padding="0,6,0,6">
+       <Grid x:Name="RunBar" Visibility="Collapsed" Margin="12,0,12,6">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <ProgressRing x:Name="RunRing" Width="20" Height="20" IsActive="False" Foreground="{StaticResource AccentTextBrush}"/>
+        <TextBlock x:Name="RunText" Grid.Column="1" FontSize="13" Foreground="{StaticResource MidBrush}" Margin="8,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+        <Button x:Name="InterruptButton" Grid.Column="2" Click="Interrupt_Click" IsEnabled="False" Padding="12,4" MinHeight="32" AutomationProperties.Name="打断">
+         <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE71A;" Style="{StaticResource Glyph}" FontSize="12" Margin="0,0,6,0"/><TextBlock Text="打断" FontSize="14"/></StackPanel>
+        </Button>
+       </Grid>
+       <ScrollViewer x:Name="AttachmentScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" HorizontalScrollMode="Auto" VerticalScrollMode="Disabled" Visibility="Collapsed" Padding="12,0,12,6">
+        <ItemsControl x:Name="AttachmentList">
+         <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+         <ItemsControl.ItemTemplate><DataTemplate>
+          <Border Background="{StaticResource ChromeMidBrush}" Margin="0,0,4,0" Padding="8,0,0,0">
+           <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" Style="{StaticResource Glyph}" FontSize="12" Margin="0,0,6,0"/><TextBlock Text="{Binding Name}" FontSize="13" VerticalAlignment="Center" MaxWidth="160" TextTrimming="CharacterEllipsis"/>
+            <Button Style="{StaticResource IconButton}" Content="&#xE711;" FontSize="10" Width="32" Height="32" Tag="{Binding}" Click="RemoveAttachment_Click" AutomationProperties.Name="移除附件"/></StackPanel>
+          </Border>
+         </DataTemplate></ItemsControl.ItemTemplate>
+        </ItemsControl>
+       </ScrollViewer>
+       <Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <Button x:Name="AttachButton" Style="{StaticResource IconButton}" Content="&#xE723;" Click="Attach_Click" IsEnabled="False" VerticalAlignment="Bottom" AutomationProperties.Name="添加附件"/>
+        <TextBox x:Name="MessageBox" Grid.Column="1" PlaceholderText="输入任务或回复" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="140" KeyDown="Message_KeyDown" AutomationProperties.Name="消息内容"/>
+        <Button x:Name="SendButton" Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE724;" Foreground="{StaticResource AccentTextBrush}" Click="Send_Click" IsEnabled="False" VerticalAlignment="Bottom" AutomationProperties.Name="发送"/>
+        <Button x:Name="SteerButton" Grid.Column="3" Click="Steer_Click" IsEnabled="False" Visibility="Collapsed" Background="Transparent" Foreground="{StaticResource AccentTextBrush}" VerticalAlignment="Bottom" Height="40" Padding="10,0,12,0" AutomationProperties.Name="追加指令">
+         <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE724;" Style="{StaticResource Glyph}" Margin="0,0,6,0"/><TextBlock Text="追加" FontSize="15"/></StackPanel>
+        </Button>
+       </Grid>
+      </StackPanel>
+     </Grid>
+    </PivotItem>
+    <PivotItem Header="文件" Margin="0">
+     <Grid>
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <StackPanel Margin="12,0,12,6">
+       <TextBlock x:Name="FileRootLabel" Style="{StaticResource Caption}" Text="工作目录"/>
+       <TextBlock x:Name="FileCrumb" FontSize="14" TextTrimming="CharacterEllipsis" Text="."/>
+      </StackPanel>
+      <ListView x:Name="FileList" Grid.Row="1" ItemTemplate="{StaticResource FileTemplate}" ItemContainerStyle="{StaticResource FlatItem}" SelectionMode="None" IsItemClickEnabled="True" ItemClick="File_Click" AutomationProperties.Name="远程文件列表"/>
+      <TextBlock x:Name="FileEmpty" Grid.Row="1" Text="切换到这里时会读取工作目录。" Style="{StaticResource Muted}" Margin="12,16" Visibility="Collapsed"/>
+     </Grid>
+    </PivotItem>
+    <PivotItem Header="终端" Margin="0">
+     <Grid>
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <TextBlock x:Name="TerminalStatus" Text="尚未连接" Style="{StaticResource Caption}" Margin="12,0,12,4"/>
+       <ListView x:Name="TerminalOutput" Grid.Row="1" Background="#0C0C0C" BorderThickness="0" Padding="8,4" SelectionMode="None" IsItemClickEnabled="False" IsTabStop="True" ItemContainerStyle="{StaticResource TerminalLineItem}" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Auto" Tapped="TerminalOutput_Tapped" KeyDown="Terminal_KeyDown" SizeChanged="Terminal_SizeChanged" AutomationProperties.Name="终端输出">
+        <ListView.ItemTemplate>
+         <DataTemplate>
+          <ItemsControl ItemsSource="{Binding Runs}">
+           <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+           <ItemsControl.ItemTemplate>
+            <DataTemplate>
+             <Border Background="{Binding Background}" Margin="0" Padding="0">
+              <TextBlock Text="{Binding Text}" Foreground="{Binding Foreground}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="{Binding Weight}" FontStyle="{Binding Style}" LineHeight="16" TextWrapping="NoWrap" IsTextSelectionEnabled="True" Margin="0" Padding="0"/>
+             </Border>
+            </DataTemplate>
+           </ItemsControl.ItemTemplate>
+          </ItemsControl>
+         </DataTemplate>
+        </ListView.ItemTemplate>
+       </ListView>
+      <StackPanel x:Name="TerminalConnectPanel" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
+       <TextBlock Text="在工作目录打开一个远程终端。滑到其他页面不会关闭它。" Style="{StaticResource Muted}" FontSize="15" TextAlignment="Center"/>
+       <Button Content="连接终端" Style="{StaticResource AccentButton}" Click="OpenTerminal_Click" HorizontalAlignment="Center" Margin="0,14,0,0"/>
+      </StackPanel>
+      <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" HorizontalScrollMode="Auto" VerticalScrollMode="Disabled" Background="{StaticResource ChromeBrush}">
+       <StackPanel Orientation="Horizontal" Padding="8,6">
+        <Button Content="Ctrl+C" Click="TerminalControl_Click" Tag="interrupt" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource ErrTextBrush}" MinWidth="52" Margin="0,0,4,0"/>
+        <Button Content="Tab" Click="TerminalControl_Click" Tag="tab" FontFamily="{StaticResource MonoFont}" MinWidth="52" Margin="0,0,4,0"/>
+        <Button Content="Esc" Click="TerminalControl_Click" Tag="escape" FontFamily="{StaticResource MonoFont}" MinWidth="52" Margin="0,0,4,0"/>
+        <Button Content="&#xE74A;" Click="TerminalControl_Click" Tag="up" FontFamily="{StaticResource IconFont}" MinWidth="52" Margin="0,0,4,0" AutomationProperties.Name="上"/>
+        <Button Content="&#xE74B;" Click="TerminalControl_Click" Tag="down" FontFamily="{StaticResource IconFont}" MinWidth="52" AutomationProperties.Name="下"/>
+       </StackPanel>
+      </ScrollViewer>
+      <Grid Grid.Row="3" Background="{StaticResource ChromeBrush}" Padding="8,0,8,6">
+       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+       <TextBox x:Name="TerminalInput" PlaceholderText="输入命令，按 Enter 执行" FontFamily="{StaticResource MonoFont}" KeyDown="TerminalInput_KeyDown" AutomationProperties.Name="终端输入"/>
+       <Button Grid.Column="1" Content="&#xE751;" FontFamily="{StaticResource IconFont}" Background="{StaticResource AccentBrush}" Foreground="White" Width="48" Height="40" Margin="4,0,0,0" Click="TerminalSend_Click" AutomationProperties.Name="执行"/>
+      </Grid>
+     </Grid>
+    </PivotItem>
+   </Pivot>
+   <CommandBar x:Name="SessionBar" Grid.Row="2" ClosedDisplayMode="Minimal">
+    <AppBarButton x:Name="BarAttach" Icon="Attach" Label="附件" Click="Attach_Click"/>
+    <AppBarButton x:Name="BarUp" Label="上一级" Click="ParentFiles_Click"><AppBarButton.Icon><FontIcon Glyph="&#xE74A;"/></AppBarButton.Icon></AppBarButton>
+    <AppBarButton x:Name="BarUpload" Icon="Upload" Label="上传文本" Click="UploadText_Click"/>
+    <AppBarButton x:Name="BarReconnect" Icon="Sync" Label="重新连接" Click="ReconnectTerminal_Click"/>
+    <AppBarButton x:Name="BarRefresh" Icon="Refresh" Label="刷新" Click="SessionRefresh_Click"/>
+    <AppBarButton x:Name="BarSettings" Icon="Setting" Label="设置" Click="OpenSettings_Click"/>
+    <CommandBar.SecondaryCommands>
+     <AppBarButton x:Name="BarGoTo" Label="转到路径…" Click="GoToPath_Click"/>
+     <AppBarButton x:Name="BarCloseTerminal" Label="关闭终端" Click="CloseTerminal_Click"/>
+     <AppBarButton x:Name="BarCommands" Label="会话命令" Click="OpenSettings_Click"/>
+     <AppBarButton Label="重命名" Click="RenameSession_Click"/>
+     <AppBarButton x:Name="BarArchive" Label="归档" Click="ArchiveSession_Click"/>
+     <AppBarButton x:Name="BarTakeover" Label="接管控制" Click="Takeover_Click"/>
+    </CommandBar.SecondaryCommands>
+   </CommandBar>
+  </Grid>
+
+  <!-- ========== 会话设置 ========== -->
+  <Grid x:Name="SettingsView" Visibility="Collapsed" Background="{StaticResource PageBrush}">
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+   <StackPanel Padding="12,8,12,10"><TextBlock x:Name="SettingsSessionName" Style="{StaticResource AppTitle}"/><TextBlock Text="会话设置" Style="{StaticResource PageTitle}"/></StackPanel>
+   <ScrollViewer Grid.Row="1"><StackPanel Padding="0,0,0,24">
+    <StackPanel Padding="12,0">
+     <ComboBox x:Name="ModelBox" Header="模型" DisplayMemberPath="Name" HorizontalAlignment="Stretch" SelectionChanged="Selection_Changed"/>
+     <ComboBox x:Name="EffortBox" Header="推理强度" DisplayMemberPath="Name" HorizontalAlignment="Stretch" Margin="0,14,0,0" SelectionChanged="Selection_Changed"/>
+     <ComboBox x:Name="PermissionBox" Header="权限" DisplayMemberPath="Name" HorizontalAlignment="Stretch" Margin="0,14,0,0" SelectionChanged="Selection_Changed"/>
+     <TextBlock Text="选中后立即生效。不可用的选项表示当前 Runtime 不支持修改。" Style="{StaticResource Muted}" Margin="0,6,0,0"/>
+    </StackPanel>
+    <TextBlock Text="会话" Style="{StaticResource SectionTitle}"/>
+    <StackPanel Orientation="Horizontal" Padding="12,0">
+     <Button Content="重命名" Click="RenameSession_Click" Margin="0,0,8,0"/>
+     <Button x:Name="ArchiveButton" Content="归档" Click="ArchiveSession_Click" Margin="0,0,8,0"/>
+     <Button x:Name="TakeoverButton" Content="接管控制" Click="Takeover_Click"/>
+    </StackPanel>
+    <TextBlock Text="会话命令" Style="{StaticResource SectionTitle}"/>
+    <StackPanel x:Name="CommandsPanel"/>
+    <TextBlock Text="工作环境" Style="{StaticResource SectionTitle}"/>
+    <Grid Margin="12,4" MinHeight="44"><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+     <TextBlock Text="&#xE977;" Style="{StaticResource Glyph}" FontSize="20" Foreground="{StaticResource AccentTextBrush}"/>
+     <StackPanel Grid.Column="1" Margin="12,0,0,0"><TextBlock x:Name="SettingsDevice" FontSize="15"/><TextBlock x:Name="SettingsRuntime" Style="{StaticResource Caption}" FontSize="13"/></StackPanel>
+    </Grid>
+    <Grid Margin="12,4" MinHeight="44"><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+     <TextBlock Text="&#xE8B7;" Style="{StaticResource Glyph}" FontSize="20" Foreground="{StaticResource AccentTextBrush}"/>
+     <StackPanel Grid.Column="1" Margin="12,0,0,0"><TextBlock Text="工作目录" FontSize="15"/><TextBlock x:Name="SettingsWorkspace" Style="{StaticResource Caption}" FontFamily="{StaticResource MonoFont}" FontSize="12" TextWrapping="Wrap"/></StackPanel>
+    </Grid>
+   </StackPanel></ScrollViewer>
+  </Grid>
+
+  <!-- ========== 文件预览 / 编辑 ========== -->
+  <Grid x:Name="FileView" Visibility="Collapsed" Background="{StaticResource PageBrush}">
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <StackPanel Padding="12,8,12,8"><TextBlock x:Name="FilePreviewLabel" Style="{StaticResource AppTitle}"/><TextBlock x:Name="FileViewName" Style="{StaticResource PageTitle}"/></StackPanel>
+   <TextBox x:Name="FileEditor" Grid.Row="1" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" FontFamily="{StaticResource MonoFont}" FontSize="13" BorderThickness="0" Background="#0C0C0C" Foreground="#E6E6E6" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto" AutomationProperties.Name="文件内容"><TextBox.Resources><SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#0C0C0C"/><SolidColorBrush x:Key="TextControlForegroundFocused" Color="#E6E6E6"/><SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#0C0C0C"/><SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#333333"/></TextBox.Resources></TextBox>
+   <CommandBar Grid.Row="2">
+    <AppBarButton x:Name="SaveFileButton" Icon="Save" Label="保存" IsEnabled="False" Click="SaveFile_Click"/>
+    <AppBarButton x:Name="DownloadFileButton" Icon="Download" Label="下载" IsEnabled="False" Click="DownloadFile_Click"/>
+   </CommandBar>
+  </Grid>
+
+  <!-- ========== 登录 ========== -->
+  <Grid x:Name="LoginOverlay" Background="{StaticResource PageBrush}">
+   <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel MaxWidth="420" Padding="12,16,12,24" HorizontalAlignment="Stretch">
+    <TextBlock Text="AGENTS ANYWHERE" Style="{StaticResource AppTitle}"/>
+    <TextBlock Text="登录" FontSize="42" FontWeight="Light" Margin="0,8,0,0"/>
+    <TextBlock Text="使用官方云账号。Agent 在你的工作设备上运行。" Style="{StaticResource Muted}" FontSize="15" Margin="0,4,0,8"/>
+    <TextBox x:Name="EmailBox" Header="邮箱" InputScope="EmailSmtpAddress" Margin="0,8,0,0"/>
+    <PasswordBox x:Name="PasswordBox" Header="密码" Margin="0,14,0,0" KeyDown="Password_KeyDown"/>
+    <TextBlock x:Name="LoginError" Foreground="{StaticResource ErrTextBrush}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="14"/>
+    <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+     <Button x:Name="BrowserLoginButton" Content="浏览器登录" Click="BrowserLogin_Click" HorizontalAlignment="Stretch" Margin="0,0,4,0"/>
+     <Button x:Name="LoginButton" Grid.Column="1" Content="登录" Click="Login_Click" Style="{StaticResource AccentButton}" HorizontalAlignment="Stretch" Margin="4,0,0,0"/>
+    </Grid>
+    <HyperlinkButton Content="注册账号或找回密码" Click="Register_Click" Margin="0,18,0,0"/>
+    <HyperlinkButton x:Name="ServerToggle" Content="使用自托管服务器" Click="ServerToggle_Click"/>
+    <TextBox x:Name="OriginBox" Header="服务器" Text="https://web.agents-anywhere.com" InputScope="Url" Visibility="Collapsed" Margin="0,4,0,8"/>
+    <HyperlinkButton Content="查看调试日志" Click="Diagnostics_Click"/>
+    <TextBlock Text="凭证保存在 Windows 凭据保险箱中。" Style="{StaticResource Muted}" FontSize="12" Margin="0,18,0,0"/>
+   </StackPanel></ScrollViewer>
+  </Grid>
+
+  <!-- 忙碌进度（桌面；手机上改用系统状态栏）和临时提示 -->
+  <ProgressBar x:Name="BusyBar" IsIndeterminate="True" VerticalAlignment="Top" Visibility="Collapsed" Background="Transparent"/>
+  <Border x:Name="StatusBanner" VerticalAlignment="Top" Background="{StaticResource ChromeMidBrush}" Padding="12,10" Visibility="Collapsed" Tapped="StatusBanner_Tapped">
+   <TextBlock x:Name="StatusText" Text="" TextWrapping="Wrap" FontSize="14"/>
+  </Border>
+ </Grid>
+</Page>

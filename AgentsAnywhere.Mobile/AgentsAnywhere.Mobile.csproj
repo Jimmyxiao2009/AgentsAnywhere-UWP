@@ -1,0 +1,36 @@
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <Platform Condition="'$(Platform)' == ''">x86</Platform>
+    <ProjectGuid>{D3A4E4D0-7B10-4D57-9DD2-1B9E31E9E7E1}</ProjectGuid>
+    <OutputType>AppContainerExe</OutputType><RootNamespace>AgentsAnywhere.Mobile</RootNamespace><AssemblyName>AgentsAnywhere.Mobile</AssemblyName>
+    <DefaultLanguage>zh-CN</DefaultLanguage><TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
+    <TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion><TargetPlatformMinVersion>10.0.14393.0</TargetPlatformMinVersion>
+    <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
+    <ProjectTypeGuids>{A5A43C5B-DE2A-4C40-9AE8-F3B8C1B65853};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <Platforms>x86;ARM;x64</Platforms><LangVersion>7.3</LangVersion><AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <AppxAutoIncrementPackageRevision>false</AppxAutoIncrementPackageRevision><AppxBundle>Never</AppxBundle>
+    <TargetFrameworkVersion>v5.0</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugSymbols>true</DebugSymbols><DebugType>full</DebugType><Optimize>false</Optimize><DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>pdbonly</DebugType><Optimize>true</Optimize><DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+  </PropertyGroup>
+  <PropertyGroup><PlatformTarget>$(Platform)</PlatformTarget><OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath><IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="**\*.cs" Exclude="bin\**;obj\**" />
+    <ApplicationDefinition Include="App.xaml" />
+    <Page Include="MainPage.xaml" />
+    <AppxManifest Include="Package.appxmanifest" />
+    <Content Include="Assets\*.png" />
+    <Content Include="Properties\Default.rd.xml" />
+    <Content Include="THIRD-PARTY-NOTICES.txt" />
+    <SDKReference Include="WindowsMobile, Version=10.0.19041.0" />
+    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform" Version="5.4.7" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
+</Project>

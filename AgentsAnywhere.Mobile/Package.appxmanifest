@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" IgnorableNamespaces="uap mp">
+ <Identity Name="AgentsAnywhere.Mobile" Publisher="CN=AgentsAnywhere" Version="1.0.0.7" />
+ <mp:PhoneIdentity PhoneProductId="D3A4E4D0-7B10-4D57-9DD2-1B9E31E9E7E1" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+ <Properties><DisplayName>Agents Anywhere UWP</DisplayName><PublisherDisplayName>Agents Anywhere UWP Community</PublisherDisplayName><Logo>Assets\StoreLogo.png</Logo></Properties>
+ <Dependencies><TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.14393.0" MaxVersionTested="10.0.19041.0" /></Dependencies>
+ <Resources><Resource Language="zh-CN" /><Resource Language="en-US" /></Resources>
+ <Applications><Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="AgentsAnywhere.Mobile.App">
+ <uap:VisualElements DisplayName="Agents Anywhere UWP" Description="连接设备，随处管理 Agent" BackgroundColor="#101821" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">
+ <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" /><uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="#101821" />
+ </uap:VisualElements>
+ <Extensions><uap:Extension Category="windows.protocol"><uap:Protocol Name="agents-anywhere-uwp"><uap:DisplayName>Agents Anywhere UWP</uap:DisplayName></uap:Protocol></uap:Extension></Extensions>
+ </Application></Applications>
+ <Capabilities><Capability Name="internetClient" /><Capability Name="privateNetworkClientServer" /></Capabilities>
+</Package>

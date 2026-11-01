@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agents Anywhere · Windows 10 Mobile 界面设计稿 v3</title>
+<style>
+:root{
+ --accent:#0078D7;--accent-t:#76B9ED;--accent-bg:rgba(0,120,215,.35);
+ --bg:#000;--chrome:#1F1F1F;--chrome-low:#171717;--chrome-ml:#2B2B2B;
+ --low:#333;--ml:#666;--mid:#999;--text:#FFF;
+ --think:#B4A0FF;--think-b:#8764B8;--warn:#FFB900;--err:#E81123;--err-t:#FF99A4;--ok:#6CCB5F;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#121212;color:var(--text);font-family:"Segoe UI","Microsoft YaHei UI","Microsoft YaHei",sans-serif;font-size:15px;line-height:1.45;padding:32px 28px 60px}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.i{font-family:"Segoe MDL2 Assets","Segoe Fluent Icons";font-style:normal;font-weight:400;line-height:1;display:inline-block}
+.mono{font-family:Consolas,"Cascadia Mono",monospace}
+code{font-family:Consolas,monospace;font-size:.92em}
+
+/* ---------- 文档 ---------- */
+.doc{max-width:1200px;margin:0 auto 28px}
+.doc h1{font-size:30px;font-weight:300}
+.doc p{color:var(--mid);margin-top:8px;max-width:900px;font-size:14px}
+.accents{display:flex;align-items:center;gap:10px;margin-top:16px;font-size:13px;color:var(--mid)}
+.accents button{width:32px;height:32px;border:2px solid transparent}
+.accents button.on{border-color:#fff}
+.panel{max-width:1200px;margin:0 auto 32px;background:#1A1A1A;padding:18px 20px}
+.panel h2{font-size:20px;font-weight:300;margin-bottom:12px}
+.panel table{width:100%;border-collapse:collapse;font-size:13px}
+.panel th,.panel td{text-align:left;padding:9px 10px;border-top:1px solid var(--low);vertical-align:top}
+.panel th{color:var(--mid);font-weight:400;border-top:0}
+.panel td.k{white-space:nowrap;font-weight:600}
+.panel ol,.panel ul{margin-left:20px;color:#C8C8C8;font-size:13px;line-height:1.75}
+.panel b{color:#fff}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.sw{display:inline-flex;align-items:center;gap:8px}
+
+/* ---------- 画板 ---------- */
+.board{display:flex;flex-wrap:wrap;gap:48px 40px;justify-content:center;max-width:1600px;margin:0 auto}
+.spec{width:360px;flex:none}
+.spec .lbl{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--accent-t)}
+.spec .lbl span{color:var(--mid);font-weight:400;margin-left:6px}
+.spec ul{margin:16px 0 0 18px;color:#B8B8B8;font-size:12.5px;line-height:1.65}
+.spec li+li{margin-top:3px}
+.phone{width:360px;height:640px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column;position:relative;box-shadow:0 0 0 1px #2A2A2A,0 0 0 12px #050505,0 0 0 13px #2A2A2A,0 24px 50px rgba(0,0,0,.6)}
+
+/* 系统状态栏 / 导航栏 */
+.sys{height:24px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 8px;font-size:12px;position:relative}
+.sys .i{font-size:12px;margin-right:6px}
+.sys .busy{display:flex;align-items:center;gap:6px}
+.nav{height:40px;flex:none;display:flex;align-items:center;justify-content:space-around;background:#000;border-top:1px solid #111}
+.nav .i{font-size:16px}
+.win{display:grid;grid-template-columns:7px 7px;gap:1px;transform:skewY(-6deg)}
+.win b{width:7px;height:7px;background:#fff}
+
+/* 进度：Windows 风格的飞点 */
+.dots{height:4px;flex:none;position:relative;overflow:hidden}
+.dots i{position:absolute;top:0;left:-8px;width:4px;height:4px;background:var(--accent);animation:dot 3.2s infinite}
+.dots i:nth-child(2){animation-delay:.16s}.dots i:nth-child(3){animation-delay:.32s}.dots i:nth-child(4){animation-delay:.48s}.dots i:nth-child(5){animation-delay:.64s}
+@keyframes dot{0%{left:-2%;animation-timing-function:cubic-bezier(.1,.6,.4,1)}40%{left:42%;animation-timing-function:linear}60%{left:56%;animation-timing-function:cubic-bezier(.6,0,.9,.4)}100%{left:104%}}
+.sys .dots{position:absolute;left:0;right:0;top:0}
+.ring{width:16px;height:16px;border-radius:50%;border:2px dotted var(--accent);animation:r 1.4s linear infinite;flex:none;display:inline-block}
+.ring.th{border-color:var(--think)}
+@keyframes r{to{transform:rotate(360deg)}}
+.caret{display:inline-block;width:2px;height:16px;background:#fff;vertical-align:-3px;margin-left:2px;animation:bl 1s steps(2) infinite}
+@keyframes bl{50%{opacity:0}}
+
+/* Pivot 与页面标题 */
+.pt{flex:none;padding:8px 12px 0;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt small{font-weight:400;color:var(--mid);margin-left:6px}
+.ph{flex:none;display:flex;gap:18px;padding:0 12px;height:46px;align-items:center;overflow:hidden;white-space:nowrap}
+.ph span{font-size:26px;font-weight:300;color:var(--ml)}
+.ph span.on{color:#fff}
+.hdr{flex:none;padding:8px 12px 10px}
+.hdr small{display:block;font-size:13px;font-weight:600}
+.hdr b{display:block;font-size:30px;font-weight:300;line-height:1.25;margin-top:2px}
+
+.scroll{flex:1;overflow-y:auto;min-height:0}
+.scroll::-webkit-scrollbar{width:3px}.scroll::-webkit-scrollbar-thumb{background:var(--ml)}
+
+/* CommandBar */
+.cb{flex:none;height:48px;background:var(--chrome);display:flex;justify-content:flex-end}
+.cb button{width:64px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.cb button.dis{color:var(--ml)}
+.cb .more{width:48px;font-size:14px;letter-spacing:2px;align-items:flex-start;padding-top:8px}
+.cb.min{height:24px}
+.cb.min .more{padding-top:2px}
+.cbx{position:absolute;left:0;right:0;bottom:40px;background:var(--chrome)}
+.cbx .row{height:72px;display:flex;justify-content:flex-end}
+.cbx .row button{width:64px;display:flex;flex-direction:column;align-items:center;padding-top:14px;gap:8px;font-size:12px}
+.cbx .row button .i{font-size:20px}
+.cbx .row .more{width:48px;font-size:14px;letter-spacing:2px;padding-top:8px}
+.cbx .menu{padding:4px 0 8px}
+.cbx .menu div{height:44px;display:flex;align-items:center;padding:0 12px;font-size:15px}
+.cbx .menu div.dis{color:var(--ml)}
+.shade{position:absolute;left:0;right:0;top:24px;bottom:40px;background:rgba(0,0,0,.6)}
+
+/* 基础控件 */
+.btn{height:40px;padding:0 14px;min-width:96px;background:var(--low);border:2px solid transparent;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.acc{background:var(--accent)}
+.btn.full{width:100%}
+.btn.dis{color:var(--ml);background:#1A1A1A}
+.link{color:var(--accent-t);font-size:15px}
+.fld{margin-top:14px}
+.fld label{display:block;font-size:15px;margin-bottom:6px}
+.tb{min-height:40px;border:2px solid var(--ml);background:#000;padding:7px 10px;font-size:15px;color:var(--mid);display:flex;align-items:center;gap:8px}
+.tb.val{color:#fff}
+.tb.focus{background:#fff;color:#000;border-color:var(--accent)}
+.tb.err{border-color:var(--err)}
+.cmb{height:40px;border:2px solid var(--ml);padding:0 10px;font-size:15px;display:flex;align-items:center;justify-content:space-between}
+.cmb .i{font-size:12px}
+.sec{font-size:15px;font-weight:600;margin:22px 12px 4px}
+.note{font-size:13px;color:var(--mid)}
+
+/* 列表 */
+.li{display:flex;align-items:center;gap:14px;min-height:60px;padding:6px 12px}
+.li .g{font-size:20px;color:var(--accent-t);width:24px;text-align:center;flex:none}
+.li .c{flex:1;min-width:0}
+.li .c b{display:block;font-weight:400;font-size:15px}
+.li .c small{display:block;font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li.dis{color:var(--ml)}.li.dis .g{color:var(--ml)}.li.dis small{color:var(--ml)}
+.grp{font-size:15px;font-weight:600;padding:16px 12px 2px}
+.ses{display:flex;padding:8px 12px 10px 8px;gap:8px}
+.ses .bar{width:4px;flex:none}
+.ses .c{flex:1;min-width:0}
+.ses .r1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.ses .r1 b{font-size:17px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ses .r1 span{font-size:12px;color:var(--mid);flex:none}
+.ses .r2{font-size:14px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ses .r3{font-size:12px;color:var(--mid);display:flex;align-items:center;gap:6px;margin-top:2px}
+.ses .r3 .i{font-size:12px}
+.sel{display:flex;gap:16px;padding:4px 12px 6px;font-size:15px}
+.sel span{display:flex;align-items:center;gap:6px}
+.sel .i{font-size:10px;color:var(--mid)}
+
+/* ---------- 时间线 ---------- */
+.tl{padding:10px 12px 16px;display:flex;flex-direction:column;gap:14px}
+.meta{font-size:12px;color:var(--mid)}
+/* 用户：系统强调色气泡 + 小尾巴 */
+.u{align-self:flex-end;max-width:84%}
+.u .bub{background:var(--accent);padding:8px 10px;font-size:15px;line-height:1.55;position:relative;margin-bottom:9px}
+.u .bub:after{content:"";position:absolute;right:12px;bottom:-9px;border-top:9px solid var(--accent);border-left:12px solid transparent}
+.u .meta{text-align:right}
+.u .att{display:flex;justify-content:flex-end;gap:4px;margin-bottom:4px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--chrome-ml);font-size:13px;padding:5px 8px}
+.chip .x{font-size:10px;color:var(--mid);margin-left:6px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center}
+/* 输出 */
+.out .meta{margin-bottom:3px}
+.out .body{font-size:15px;line-height:1.6}
+.out .body p+p,.out .body p+ul,.out .body ul+p{margin-top:8px}
+.out .body ul{padding-left:18px}
+.out .body code{background:var(--chrome-ml);padding:0 4px}
+.code{background:var(--chrome-low);margin-top:10px;border-left:2px solid var(--accent)}
+.code .h{display:flex;justify-content:space-between;align-items:center;height:32px;padding-left:10px;font-size:12px;color:var(--mid)}
+.code .h button{width:40px;height:32px;font-size:13px}
+.code pre{font-family:Consolas,monospace;font-size:12.5px;line-height:1.55;padding:0 10px 8px;overflow-x:auto;white-space:pre;color:#E6E6E6}
+.kw{color:var(--accent-t)}.cm{color:#7A7A7A}
+.done{font-size:12px;color:var(--mid);margin-top:8px;display:flex;align-items:center;gap:6px}
+.done .i{color:var(--ok)}
+/* 过程轨道 */
+.proc{background:var(--chrome-low)}
+.proc .hd{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;cursor:pointer}
+.proc .hd .t{font-size:15px;flex:none}
+.proc .hd .s{font-size:12px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.proc .hd .chev{margin-left:auto;font-size:11px;color:var(--mid);flex:none;transition:transform .15s}
+.proc.open>.hd .chev{transform:rotate(180deg)}
+.proc .bd{display:none;padding:2px 12px 0}
+.proc.open>.bd{display:block}
+.stp{display:flex;gap:10px}
+.stp .rl{width:20px;flex:none;display:flex;flex-direction:column;align-items:center}
+.stp .rl:after{content:"";flex:1;width:1px;background:var(--low);margin:3px 0}
+.stp:last-child .rl:after{background:transparent}
+.n{width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;flex:none}
+.n.th{border-radius:50%;border:1px solid var(--think-b);color:var(--think)}
+.n.to{background:var(--low)}
+.n.run{background:var(--accent)}
+.n.er{background:var(--err)}
+.n.ap{background:var(--warn);color:#000}
+.n.no:before{content:"";width:8px;height:8px;background:var(--accent)}
+.n.fd{border:1px dashed var(--ml);color:var(--mid)}
+.sc{flex:1;min-width:0;padding-bottom:12px}
+.sl{display:flex;align-items:center;gap:8px;min-height:20px;font-size:12px;color:var(--mid)}
+.sl b{font-weight:400;font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.sl .ok,.sl .bad,.sl .ring{margin-left:auto}
+.ok{color:var(--ok)}.bad{color:var(--err-t)}
+.sub{font-size:12px;color:var(--mid)}
+.add{color:var(--ok)}.del{color:var(--err-t)}
+.tt{font-size:13px;color:#BDBDBD;font-style:italic;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.stp.open .tt{display:block}
+.nt{font-size:14px;line-height:1.6}
+.td{display:none;background:#0A0A0A;margin-top:6px}
+.stp.open .td{display:block}
+.td pre{font-family:Consolas,monospace;font-size:12px;line-height:1.5;padding:6px 8px;color:#DADADA;overflow-x:auto;white-space:pre}
+.stp.tap .sc{cursor:pointer}
+/* 审批卡片 / 系统 / 错误 */
+.ask{background:var(--chrome);border-left:4px solid var(--warn);padding:10px 12px}
+.ask .t{color:var(--warn);font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.ask .p{font-family:Consolas,monospace;font-size:12px;color:var(--mid);margin:2px 0 10px;word-break:break-all}
+.mk{display:flex;align-items:center;gap:10px;color:var(--mid);font-size:12px}
+.mk:before,.mk:after{content:"";flex:1;height:1px;background:var(--low)}
+.errl{border-left:4px solid var(--err);background:var(--chrome-low);padding:8px 12px;font-size:13px;color:var(--err-t)}
+.older{align-self:center;font-size:14px;color:var(--accent-t);padding:4px 8px}
+
+/* 输入区 */
+.cmp{flex:none;background:var(--chrome);padding:6px 0 0}
+.cmp .atts{display:flex;gap:4px;overflow-x:auto;padding:0 12px 6px}
+.cmp .atts .chip{flex:none}
+.cmp .row{display:flex;align-items:flex-end}
+.cmp .row>button{width:48px;height:40px;font-size:18px;flex:none}
+.cmp .tb{flex:1;background:#000;border-color:var(--ml);font-size:15px}
+.cmp .tb.focus{background:#fff;color:#000;border-color:var(--accent)}
+.cmp .send{color:var(--accent-t)}
+.cmp .send.dis{color:var(--ml)}
+.cmp .steer{width:auto!important;padding:0 12px 0 10px;font-size:15px!important;color:var(--accent-t);display:flex;align-items:center;gap:6px}
+.runbar{display:flex;align-items:center;gap:8px;padding:0 0 6px 12px;font-size:13px;color:var(--mid)}
+.runbar b{font-weight:600;color:#fff}
+.runbar .btn{margin-left:auto;height:32px;min-width:0;font-size:14px;padding:0 12px;margin-right:12px}
+
+/* ContentDialog */
+.dlg{position:absolute;left:0;right:0;top:24px;background:var(--chrome-ml);padding:16px 12px 12px}
+.dlg h3{font-size:20px;font-weight:400;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.dlg .k{font-size:13px;color:var(--mid);margin-top:10px}
+.dlg .v{font-size:15px}
+.dlg .v.mono{font-size:13px;word-break:break-all}
+.dlg .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+.dlg .btns .btn{width:100%;min-width:0}
+.tag{font-size:12px;padding:1px 6px;background:var(--warn);color:#000;font-weight:600}
+
+/* 登录 */
+.login{padding:16px 12px}
+.login .app{font-size:13px;font-weight:600}
+.login h2{font-size:42px;font-weight:300;line-height:1.15;margin-top:12px}
+.login .sub{color:var(--mid);font-size:15px;margin-top:6px}
+.login .err{color:var(--err-t);font-size:14px;margin-top:10px;display:flex;gap:8px}
+.login .err .i{margin-top:3px}
+
+/* 文件 / 终端 */
+.crumb{flex:none;padding:0 12px 6px;font-size:13px;color:var(--mid);white-space:nowrap;overflow-x:auto}
+.crumb b{color:#fff;font-weight:400}
+.fi{display:flex;align-items:center;gap:14px;min-height:56px;padding:4px 12px}
+.fi .g{font-size:22px;width:26px;text-align:center;flex:none}
+.fi .c{flex:1;min-width:0}
+.fi .c b{display:block;font-weight:400;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fi .c small{font-size:12px;color:var(--mid)}
+.fi.on{background:var(--accent-bg)}
+.term{flex:1;background:#0C0C0C;font-family:Consolas,monospace;font-size:12.5px;line-height:1.5;color:#CCC;padding:6px 8px;overflow:auto;white-space:pre;min-height:0}
+.term .g{color:#16C60C}.term .y{color:#F9F1A5}.term .d{color:#767676}
+.keys{flex:none;display:flex;gap:4px;padding:6px 8px;background:var(--chrome);overflow-x:auto}
+.keys button{flex:none;min-width:52px;height:36px;padding:0 10px;background:var(--low);font-family:Consolas,monospace;font-size:13px}
+.tin{flex:none;display:flex;gap:4px;padding:0 8px 6px;background:var(--chrome)}
+.tin .tb{flex:1;font-family:Consolas,monospace;font-size:14px}
+.tin button{width:48px;height:40px;background:var(--accent);font-size:16px}
+.log{background:#0C0C0C;margin:6px 12px 0;padding:8px 10px;font-family:Consolas,monospace;font-size:11px;line-height:1.55;color:#BDBDBD;white-space:pre;overflow-x:auto}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;flex:none}
+</style>
+</head>
+<body>
+
+<header class="doc">
+ <h1>Agents Anywhere · Windows 10 Mobile 界面设计稿 v3</h1>
+ <p>按 Windows 10 Mobile 的设计语言重做。画板 360 × 640 有效像素（Lumia 950 竖屏），包含顶部状态栏和底部系统导航栏。数据都是示意。图标使用 Segoe MDL2 Assets，与 UWP 的 <code>FontIcon</code> / <code>SymbolIcon</code> 对应。点击“过程”标题、思考或工具步骤可以展开或折叠。</p>
+ <div class="accents">强调色跟随系统设置，下面可以切换预览：
+  <button class="on" style="background:#0078D7" data-a="#0078D7,#76B9ED,rgba(0,120,215,.35)" title="钴蓝（默认）"></button>
+  <button style="background:#00B294" data-a="#00B294,#5ED6BD,rgba(0,178,148,.35)" title="海沫绿"></button>
+  <button style="background:#CA5010" data-a="#CA5010,#F59A63,rgba(202,80,16,.35)" title="橙"></button>
+  <button style="background:#744DA9" data-a="#744DA9,#B9A0E3,rgba(116,77,169,.4)" title="紫"></button>
+  <button style="background:#E81123" data-a="#E81123,#FF8A93,rgba(232,17,35,.35)" title="红"></button>
+ </div>
+</header>
+
+<section class="panel">
+ <h2>Windows 10 Mobile 设计规则对照</h2>
+ <div class="cols">
+  <ul>
+   <li><b>颜色</b>：纯黑背景，强调色读 <code>SystemAccentColor</code>，不写死品牌色。界面上只用 Windows 的系统色：警告黄 #FFB900、错误红 #E81123、成功绿。</li>
+   <li><b>形状</b>：全部直角，没有圆角卡片和阴影。层级靠灰阶背景区分：#000、#171717、#1F1F1F、#2B2B2B。</li>
+   <li><b>文字</b>：Segoe UI / 微软雅黑 UI。页面大标题用细体（Light / SemiLight），正文 15px，次要信息用 60% 白。</li>
+   <li><b>导航</b>：根页面和会话页都用 Pivot，可以左右滑动切换。不在页面里放返回箭头，统一用系统返回键。</li>
+  </ul>
+  <ul>
+   <li><b>命令</b>：底部 CommandBar，只放图标，点 <code>•••</code> 后展开文字标签和次要命令。会话页用最小化的 CommandBar，把空间留给消息。</li>
+   <li><b>对话框</b>：审批等重要决定用 ContentDialog，在手机上贴顶全宽显示，两个等宽按钮。</li>
+   <li><b>进度</b>：运行中用飞点进度条，单项用点状 ProgressRing。实时连接中断时，在状态栏显示 <code>StatusBar.ProgressIndicator</code> 的文字和飞点。</li>
+   <li><b>控件</b>：TextBox 和 ComboBox 使用 2px 边框，TextBox 获得焦点时变白底。ComboBox 在手机上打开全屏选择页。</li>
+  </ul>
+ </div>
+</section>
+
+<section class="panel">
+ <h2>时间线条目怎么区分</h2>
+ <table>
+  <tr><th>类别</th><th>视觉规则</th><th>数据来源（上游 timeline item）</th><th>默认状态</th></tr>
+  <tr><td class="k"><span class="sw"><span style="width:16px;height:12px;background:var(--accent);display:inline-block"></span>用户消息</span></td><td>唯一靠右、用强调色填充的直角气泡，右下带小尾巴，和系统“短信”应用一致。附件在气泡上方。</td><td><code>type=message</code>，<code>role=user</code></td><td>完整显示</td></tr>
+  <tr><td class="k"><span class="sw"><span class="n th" style="display:inline-flex"><i class="i">&#xE82F;</i></span>思考</span></td><td>过程轨道上的紫色<b>圆形</b>描边节点，灰色斜体小字。</td><td><code>type=system</code>，<code>content.kind=reasoning</code></td><td>两行预览，点开看全文；正在进行时实时展开</td></tr>
+  <tr><td class="k"><span class="sw"><span class="n to" style="display:inline-flex"><i class="i">&#xE756;</i></span>工具</span></td><td>过程轨道上的灰色<b>实心方块</b>节点。运行中变成强调色，失败变红。等宽目标文字，右侧显示状态，点开查看输出。</td><td><code>type=tool</code> / <code>artifact</code>，按 <code>content.kind</code> 选图标</td><td>一行；失败或运行中的工具展开输出</td></tr>
+  <tr><td class="k"><span class="sw"><span class="n no" style="display:inline-flex"></span>中间说明</span></td><td>过程轨道上的强调色小方点，正常字色，14px，不斜体。</td><td>assistant 消息，同一轮后面还有思考或工具</td><td>完整显示</td></tr>
+  <tr><td class="k"><span class="sw"><span style="width:16px;height:2px;background:#fff;display:inline-block"></span>最终输出</span></td><td>放在轨道外面，左对齐通栏正文，没有气泡。代码块用左侧强调色细线标出。</td><td>本轮最后一条 assistant 消息；<code>turn.end</code> 只用来显示用时</td><td>完整显示；超过 40 行时折叠</td></tr>
+  <tr><td class="k"><span class="sw"><span class="n ap" style="display:inline-flex"><i class="i">&#xE83D;</i></span>审批</span></td><td>待处理时是轨道之后的块，左侧有黄色粗条；点开后弹出 ContentDialog。处理后变成轨道里的黄色方块节点。</td><td>open notices</td><td>始终显示，不跟随折叠</td></tr>
+  <tr><td class="k"><span class="sw"><span style="width:16px;height:1px;background:var(--mid);display:inline-block"></span>系统 / 错误</span></td><td>居中细线文字。错误块左侧有红色粗条。</td><td><code>marker</code>、非 reasoning 的 <code>system</code>、<code>failed</code></td><td>完整显示</td></tr>
+ </table>
+ <h2 style="margin-top:20px">一轮 Agent 循环怎么排</h2>
+ <ol>
+  <li>一轮从一条用户消息开始，到 <code>turn.end</code> 或下一条用户消息为止。除最终输出外的条目，都按时间顺序串在<b>同一条过程轨道</b>上。思考和工具交替多少次，轨道都只有一条。</li>
+  <li>已完成的轮收成一行摘要；有失败或被打断时默认展开。运行中的轮保持展开，只显示最近 5 步，更早的步骤收成“显示前面 n 步”。</li>
+  <li>运行中如果最后一条回复后面又出现工具，它会收进轨道，变成中间说明。</li>
+ </ol>
+</section>
+
+<main class="board">
+
+<!-- 01 登录 -->
+<div class="spec">
+ <div class="lbl">01 登录<span>失败状态</span></div>
+ <div class="phone">
+  <div class="sys"><span><i class="i">&#xE870;</i><i class="i">&#xE701;</i></span><span><i class="i">&#xE83F;</i>10:30</span></div>
+  <div class="scroll"><div class="login">
+   <div class="app">AGENTS ANYWHERE</div>
+   <h2>登录</h2>
+   <div class="sub">使用官方云账号。Agent 在你的工作设备上运行。</div>
+   <div class="fld"><label>邮箱</label><div class="tb val">dev@example.com</div></div>
+   <div class="fld"><label>密码</label><div class="tb focus err" style="letter-spacing:3px">••••••••••</div></div>
+   <div class="err"><i class="i">&#xE783;</i><span>邮箱或密码不正确。</span></div>
+   <div style="display:flex;gap:8px;margin-top:20px">
+    <button class="btn" style="flex:1">浏览器登录</button>
+    <button class="btn acc" style="flex:1">登录</button>
+   </div>
+   <div style="margin-top:22px;display:flex;flex-direction:column;gap:14px">
+    <span class="link">注册账号或找回密码</span>
+    <span class="link">使用自托管服务器</span>
+    <span class="link">查看调试日志</span>
+   </div>
+   <div class="note" style="margin-top:20px">凭证保存在 Windows 凭据保险箱中。</div>
+  </div></div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+ </div>
+ <ul>
+  <li>标题沿用 Windows 10 Mobile 系统页的写法：小号大写应用名，下面是大号细体页名。</li>
+  <li>获得焦点的密码框变白底；出错时边框变红，错误写在下方。网络失败写“无法连接服务器”，并提供“重试”。</li>
+  <li>两个按钮并排等宽，主操作用强调色放在右侧，与系统对话框一致。</li>
+  <li>启动恢复时只显示应用名和飞点进度条。</li>
+ </ul>
+</div>
+
+<!-- 02 会话列表 -->
+<div class="spec">
+ <div class="lbl">02 会话列表<span>根 Pivot · 会话</span></div>
+ <div class="phone">
+  <div class="sys"><span><i class="i">&#xE870;</i><i class="i">&#xE701;</i></span><span><i class="i">&#xE83F;</i>10:41</span></div>
+  <div class="pt">AGENTS ANYWHERE</div>
+  <div class="ph"><span class="on">会话</span><span>设备</span><span>我的</span></div>
+  <div class="sel"><span>Agents Anywhere <i class="i">&#xE70D;</i></span><span style="color:var(--mid)">全部设备 <i class="i">&#xE70D;</i></span></div>
+  <div class="scroll">
+   <div class="grp" style="color:var(--warn)">需要你处理</div>
+   <div class="ses"><div class="bar" style="background:var(--warn)"></div><div class="c">
+    <div class="r1"><b>重做移动端界面</b><span>10:38</span></div>
+    <div class="r2">请求读取 AgentsAnywhere.Mobile/MainPage.xaml</div>
+    <div class="r3" style="color:var(--warn)"><i class="i">&#xE83D;</i>等待批准 · Codex · Studio PC</div>
+   </div></div>
+   <div class="grp">今天</div>
+   <div class="ses"><div class="bar" style="background:var(--accent)"></div><div class="c">
+    <div class="r1"><b style="color:var(--accent-t)">修复手机登录</b><span>10:42</span></div>
+    <div class="r2">正在执行 rg "1006|0x80072EFE" -n Services</div>
+    <div class="r3"><span class="ring" style="width:12px;height:12px"></span>运行中 · Codex · Studio PC</div>
+   </div></div>
+   <div class="ses"><div class="bar"></div><div class="c">
+    <div class="r1"><b>排查 WebSocket 1006</b><span>11:05</span></div>
+    <div class="r2">找到原因了：连接空闲约 90 秒会被中间层断开。</div>
+    <div class="r3">Codex · Studio PC</div>
+   </div></div>
+   <div class="grp">更早</div>
+   <div class="ses"><div class="bar"></div><div class="c">
+    <div class="r1"><b>整理项目文档</b><span>昨天</span></div>
+    <div class="r2">已把 HANDOFF.md 拆成部署、协议和测试三节。</div>
+    <div class="r3">Claude Code · Studio PC</div>
+   </div></div>
+   <div class="ses"><div class="bar"></div><div class="c">
+    <div class="r1"><b>ARM Release 打包</b><span>10月8日</span></div>
+    <div class="r2">签名失败：找不到 CN=AgentsAnywhere 证书。</div>
+    <div class="r3" style="color:var(--err-t)"><i class="i">&#xE783;</i>失败 · Codex · Laptop（离线）</div>
+   </div></div>
+  </div>
+  <div class="cb"><button><i class="i">&#xE710;</i></button><button><i class="i">&#xE721;</i></button><button><i class="i">&#xE72C;</i></button><button class="more">•••</button></div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+ </div>
+ <ul>
+  <li>根页面是三栏 Pivot：会话、设备、我的，可以左右滑动切换。</li>
+  <li>项目和设备是两个下拉，点开后进入全屏选择页。离线设备会标注。</li>
+  <li>列表沿用系统“邮件”的样式：左侧色条表示状态，黄色是等待处理，强调色是运行中。</li>
+  <li>CommandBar：新建、搜索、刷新；<code>•••</code> 里有新建项目和显示已归档。</li>
+ </ul>
+</div>
+
+<!-- 03 对话 · 已完成 -->
+<div class="spec">
+ <div class="lbl">03 会话<span>会话 Pivot · 对话</span></div>
+ <div class="phone">
+  <div class="sys"><span><i class="i">&#xE870;</i><i class="i">&#xE701;</i></span><span><i class="i">&#xE83F;</i>10:44</span></div>
+  <div class="pt">修复手机登录<small>Studio PC · 在线</small></div>
+  <div class="ph"><span class="on">对话</span><span>文件</span><span>终端</span></div>
+  <div class="scroll"><div class="tl">
+   <button class="older">加载更早的消息</button>
+   <div class="mk">今天 10:31</div>
+   <div class="u">
+    <div class="att"><span class="chip"><i class="i">&#xEB9F;</i>login-error.png</span></div>
+    <div class="bub">官网账号登录一直提示密码错误，帮我看看 AuthService 的登录流程。</div>
+    <div class="meta">10:31</div>
+   </div>
+
+   <div class="proc" data-p>
+    <div class="hd"><i class="i ok">&#xE73E;</i><span class="t">过程</span><span class="s">思考 2 · 工具 4 · 1 分 08 秒</span><i class="i chev">&#xE70D;</i></div>
+    <div class="bd">
+     <div class="stp tap"><div class="rl"><div class="n th"><i class="i">&#xE82F;</i></div></div><div class="sc"><div class="sl" style="color:var(--think)">思考 · 5 秒</div><div class="tt">用户说官网账号被拒绝。先看 AuthService 发送给 /auth/login 的字段，再对照上游 web 的 password-verifier.ts。</div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE8A5;</i></div></div><div class="sc"><div class="sl"><b class="mono">Services/AuthService.cs</b><i class="i ok">&#xE73E;</i></div><div class="sub">读取文件 · 214 行</div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE721;</i></div></div><div class="sc"><div class="sl"><b class="mono">passwordVerifier</b><i class="i ok">&#xE73E;</i></div><div class="sub">搜索 · 6 处匹配</div></div></div>
+     <div class="stp tap"><div class="rl"><div class="n th"><i class="i">&#xE82F;</i></div></div><div class="sc"><div class="sl" style="color:var(--think)">思考 · 3 秒</div><div class="tt">客户端发的是明文 password，服务端期望 passwordVerifier，所以一直 401。改请求体，再跑测试。</div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE70F;</i></div></div><div class="sc"><div class="sl"><b class="mono">Services/AuthService.cs</b><i class="i ok">&#xE73E;</i></div><div class="sub">修改文件 · <span class="add">+18</span> <span class="del">−6</span></div></div></div>
+     <div class="stp tap"><div class="rl"><div class="n to"><i class="i">&#xE756;</i></div></div><div class="sc"><div class="sl"><b class="mono">dotnet run --project tests\ProtocolTests</b><i class="i ok">&#xE73E;</i></div><div class="sub">命令 · 9 / 9 通过 · 14 秒</div>
+      <div class="td"><pre>[PASS] password verifier vectors
+[PASS] login uses verifier body
+9 / 9 passed</pre></div></div></div>
+    </div>
+   </div>
+
+   <div class="out">
+    <div class="meta">Agent · 10:33</div>
+    <div class="body">
+     <p>已修正登录校验，并补上错误提示。问题是客户端直接发送了明文密码，服务端要求的是派生校验值。</p>
+     <ul><li>按 UTF-8 使用盐值，PBKDF2-SHA256 120000 次</li><li>请求体改为 <code>{email, passwordVerifier}</code></li></ul>
+     <div class="code"><div class="h"><span>C# · AuthService.cs</span><button><i class="i">&#xE8C8;</i></button></div><pre><span class="kw">var</span> verifier = Derive(password, salt);
+<span class="kw">await</span> api.LoginAsync(email, verifier);
+<span class="cm">// 401 = 登录失败，不触发 Unauthorized</span></pre></div>
+    </div>
+    <div class="done"><i class="i">&#xE73E;</i>已完成 · 用时 1 分 12 秒</div>
+   </div>
+
+   <div class="mk">上下文已压缩</div>
+   <div class="u"><div class="bub">请继续检查断线重连。</div><div class="meta">10:40</div></div>
+   <div class="proc open" data-p>
+    <div class="hd"><i class="i" style="color:var(--warn)">&#xE7BA;</i><span class="t">过程</span><span class="s">思考 1 · 工具 1 · 1 失败 · 已打断</span><i class="i chev">&#xE70D;</i></div>
+    <div class="bd">
+     <div class="stp tap"><div class="rl"><div class="n th"><i class="i">&#xE82F;</i></div></div><div class="sc"><div class="sl" style="color:var(--think)">思考 · 2 秒</div><div class="tt">先找手机端的实时连接日志，看断开前后的记录。</div></div></div>
+     <div class="stp"><div class="rl"><div class="n er"><i class="i">&#xE8A5;</i></div></div><div class="sc"><div class="sl"><b class="mono">logs/realtime.log</b><i class="i bad">&#xE711;</i></div><div class="sub">读取文件 · 文件不存在</div></div></div>
+    </div>
+   </div>
+   <div class="errl">本轮被你打断。可以直接发送新消息继续。</div>
+  </div></div>
+  <div class="cmp">
+   <div class="row"><button><i class="i">&#xE723;</i></button><div class="tb">输入任务或回复</div><button class="send dis"><i class="i">&#xE724;</i></button></div>
+   <div class="cb min"><button class="more">•••</button></div>
+  </div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+ </div>
+ <ul>
+  <li>会话页也是 Pivot：对话、文件、终端，横滑切换。Pivot 标题显示会话名和设备状态。</li>
+  <li>输入区仿照系统“短信”：附件、输入框、发送三者一行，下面是最小化的 CommandBar（<code>•••</code>），展开见 06。</li>
+  <li>用户消息是强调色直角气泡；Agent 回复没有气泡，用正文字号显示。</li>
+  <li>已完成的轮收成一行“过程”；被打断的轮默认展开。</li>
+ </ul>
+</div>
+
+<!-- 04 对话 · 运行中 -->
+<div class="spec">
+ <div class="lbl">04 会话<span>运行中 · 追加 · 状态栏重连</span></div>
+ <div class="phone">
+  <div class="sys"><div class="dots"><i></i><i></i><i></i><i></i><i></i></div><span class="busy">正在重新连接…</span><span>10:42</span></div>
+  <div class="pt">修复手机登录<small>Studio PC · 在线</small></div>
+  <div class="ph"><span class="on">对话</span><span>文件</span><span>终端</span></div>
+  <div class="dots"><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="scroll" data-bottom><div class="tl">
+   <div class="u"><div class="bub">请继续检查断线重连。</div><div class="meta">10:40</div></div>
+   <div class="proc open" data-p>
+    <div class="hd"><span class="ring"></span><span class="t">过程</span><span class="s">思考 1 · 工具 2 · 0:42</span><i class="i chev">&#xE70D;</i></div>
+    <div class="bd">
+     <div class="stp tap"><div class="rl"><div class="n th"><i class="i">&#xE82F;</i></div></div><div class="sc"><div class="sl" style="color:var(--think)">思考 · 6 秒</div><div class="tt">1006 一般是对端没发关闭帧就断开。先看 RealtimeSocket 里重连时是否重新申请 ticket，再看退避上限。</div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE8A5;</i></div></div><div class="sc"><div class="sl"><b class="mono">Services/RealtimeSocket.cs</b><i class="i ok">&#xE73E;</i></div><div class="sub">读取文件 · 188 行</div></div></div>
+     <div class="stp"><div class="rl"><div class="n no"></div></div><div class="sc"><div class="nt">重连时已经会重新申请 ticket。接着找 1006 在代码里的处理位置。</div></div></div>
+     <div class="stp tap open"><div class="rl"><div class="n run"><i class="i">&#xE756;</i></div></div><div class="sc"><div class="sl"><b class="mono">rg "1006|0x80072EFE" -n Services</b><span class="ring"></span></div><div class="sub">命令 · 运行 0:06</div>
+      <div class="td"><pre>Services/RealtimeSocket.cs:91:  // 1006
+Services/RealtimeSocket.cs:142: if (hr == 0x80072EFE)</pre></div></div></div>
+    </div>
+   </div>
+  </div></div>
+  <div class="cmp">
+   <div class="runbar"><span class="ring"></span><b>运行中</b>0:42 · 执行命令<button class="btn"><i class="i" style="font-size:12px">&#xE71A;</i>打断</button></div>
+   <div class="atts"><span class="chip"><i class="i">&#xEB9F;</i>phone-1006.png<button class="x"><i class="i">&#xE711;</i></button></span><span class="chip"><i class="i">&#xE8A5;</i>diagnostics.log<button class="x"><i class="i">&#xE711;</i></button></span></div>
+   <div class="row"><button><i class="i">&#xE723;</i></button><div class="tb focus"><span>顺便看看退避上限是不是 30 秒<span class="caret" style="background:#000"></span></span></div><button class="steer"><i class="i">&#xE724;</i>追加</button></div>
+   <div class="cb min"><button class="more">•••</button></div>
+  </div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+ </div>
+ <ul>
+  <li>实时连接中断时，用系统状态栏的进度指示显示“正在重新连接…”，不占页面空间。</li>
+  <li>Pivot 下方的飞点进度条表示任务正在运行；正在执行的工具节点变成强调色。</li>
+  <li>运行中时，发送按钮变成“追加”；“打断”放在上方状态行，和发送分开。</li>
+  <li>附件是可以单独删除的小块，横向排列。获得焦点的输入框是白底，跟随软键盘上移。</li>
+ </ul>
+</div>
+
+<!-- 04-A 多轮循环 · 已完成 -->
+<div class="spec">
+ <div class="lbl">04-A 多轮循环<span>已完成 · 展开过程轨道</span></div>
+ <div class="phone">
+  <div class="sys"><span><i class="i">&#xE870;</i><i class="i">&#xE701;</i></span><span><i class="i">&#xE83F;</i>11:06</span></div>
+  <div class="pt">排查 WebSocket 1006<small>Studio PC · 在线</small></div>
+  <div class="ph"><span class="on">对话</span><span>文件</span><span>终端</span></div>
+  <div class="scroll"><div class="tl">
+   <div class="u"><div class="bub">手机上 WebSocket 隔一会儿就断（1006），帮我查清楚是哪一边的问题，能修就修。</div><div class="meta">11:02</div></div>
+   <div class="proc open" data-p>
+    <div class="hd"><i class="i ok">&#xE73E;</i><span class="t">过程</span><span class="s">思考 4 · 工具 7 · 1 失败 · 3 分 12 秒</span><i class="i chev">&#xE70D;</i></div>
+    <div class="bd">
+     <div class="stp tap"><div class="rl"><div class="n th"><i class="i">&#xE82F;</i></div></div><div class="sc"><div class="sl" style="color:var(--think)">思考 · 4 秒</div><div class="tt">先确认断线发生在哪一层：客户端主动关闭、系统网络栈，还是服务端。看诊断日志里每次断开的时间间隔。</div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE8A5;</i></div></div><div class="sc"><div class="sl"><b class="mono">LocalState/diagnostics.log</b><i class="i ok">&#xE73E;</i></div><div class="sub">读取文件 · 412 行</div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE721;</i></div></div><div class="sc"><div class="sl"><b class="mono">"close 1006"</b><i class="i ok">&#xE73E;</i></div><div class="sub">搜索 · 9 处匹配</div></div></div>
+     <div class="stp tap"><div class="rl"><div class="n th"><i class="i">&#xE82F;</i></div></div><div class="sc"><div class="sl" style="color:var(--think)">思考 · 7 秒</div><div class="tt">9 次断开的间隔都在 90 到 100 秒之间，非常规律。更像是中间某一层的空闲超时，不是随机的网络抖动。看看客户端有没有发心跳。</div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE8A5;</i></div></div><div class="sc"><div class="sl"><b class="mono">Services/RealtimeSocket.cs</b><i class="i ok">&#xE73E;</i></div><div class="sub">读取文件 · 188 行</div></div></div>
+     <div class="stp"><div class="rl"><div class="n no"></div></div><div class="sc"><div class="nt">客户端没有应用层心跳，连接空闲约 90 秒就会被断开。我加一个 30 秒的 ping，再跑测试确认。</div></div></div>
+     <div class="stp"><div class="rl"><div class="n ap"><i class="i">&#xE83D;</i></div></div><div class="sc"><div class="sl"><b>已允许一次 · 写入文件</b></div><div class="sub">你在 11:04 批准 · Services/RealtimeSocket.cs</div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE70F;</i></div></div><div class="sc"><div class="sl"><b class="mono">Services/RealtimeSocket.cs</b><i class="i ok">&#xE73E;</i></div><div class="sub">修改文件 · <span class="add">+24</span> <span class="del">−3</span></div></div></div>
+     <div class="stp tap open"><div class="rl"><div class="n er"><i class="i">&#xE756;</i></div></div><div class="sc"><div class="sl"><b class="mono">dotnet run --project tests\ProtocolTests</b><i class="i bad">&#xE711;</i></div><div class="sub">命令 · 退出码 1 · 1 个失败</div>
+      <div class="td"><pre>[FAIL] socket ignores pong frames
+  expected: no timeline event
+  actual:   message "pong"</pre></div></div></div>
+     <div class="stp tap"><div class="rl"><div class="n th"><i class="i">&#xE82F;</i></div></div><div class="sc"><div class="sl" style="color:var(--think)">思考 · 3 秒</div><div class="tt">失败是因为 pong 被当成普通消息分发给了时间线。在接收循环里先过滤掉心跳回包。</div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE70F;</i></div></div><div class="sc"><div class="sl"><b class="mono">Services/RealtimeSocket.cs</b><i class="i ok">&#xE73E;</i></div><div class="sub">修改文件 · <span class="add">+6</span> <span class="del">−1</span></div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE756;</i></div></div><div class="sc"><div class="sl"><b class="mono">dotnet run --project tests\ProtocolTests</b><i class="i ok">&#xE73E;</i></div><div class="sub">命令 · 10 / 10 通过 · 16 秒</div></div></div>
+     <div class="stp tap"><div class="rl"><div class="n th"><i class="i">&#xE82F;</i></div></div><div class="sc"><div class="sl" style="color:var(--think)">思考 · 2 秒</div><div class="tt">改动没碰登录和 cursor 恢复，可以收尾。提醒用户在真机上长时间验证。</div></div></div>
+    </div>
+   </div>
+   <div class="out">
+    <div class="meta">Agent · 11:05</div>
+    <div class="body">
+     <p>找到原因了：连接空闲约 90 秒会被中间层断开，所以出现 1006。客户端之前没有心跳。</p>
+     <ul><li>每 30 秒发送一次 ping，收到的 pong 不再进入时间线</li><li>新增一条协议测试，现在 10 / 10 通过</li><li>还需要在手机上挂半小时，确认不再断开</li></ul>
+    </div>
+    <div class="done"><i class="i">&#xE73E;</i>已完成 · 用时 3 分 12 秒</div>
+   </div>
+  </div></div>
+  <div class="cmp">
+   <div class="row"><button><i class="i">&#xE723;</i></button><div class="tb">输入任务或回复</div><button class="send dis"><i class="i">&#xE724;</i></button></div>
+   <div class="cb min"><button class="more">•••</button></div>
+  </div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+ </div>
+ <ul>
+  <li>思考和工具交替了 4 轮，仍然只有一条轨道。可以在画面里滚动查看。</li>
+  <li>节点靠形状区分：圆形描边是思考，实心方块是工具，小方点是中间说明，黄色方块是已处理的审批。</li>
+  <li>失败的工具节点变红，并默认展开输出；紧跟着的思考解释失败原因。</li>
+  <li>只有最后一条回复放在轨道外面。</li>
+ </ul>
+</div>
+
+<!-- 04-B 长任务运行中 -->
+<div class="spec">
+ <div class="lbl">04-B 多轮循环<span>长任务运行中 · 早期步骤自动收起</span></div>
+ <div class="phone">
+  <div class="sys"><span><i class="i">&#xE870;</i><i class="i">&#xE701;</i></span><span><i class="i">&#xE83F;</i>11:48</span></div>
+  <div class="pt">重构消息时间线<small>Studio PC · 在线</small></div>
+  <div class="ph"><span class="on">对话</span><span>文件</span><span>终端</span></div>
+  <div class="dots"><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="scroll" data-bottom><div class="tl">
+   <div class="u"><div class="bub">把时间线改成按消息类型分模板显示，顺便修掉同一 sequence 的事件被丢掉的问题。</div><div class="meta">11:42</div></div>
+   <div class="proc open" data-p>
+    <div class="hd"><span class="ring th"></span><span class="t">过程</span><span class="s">第 16 步 · 思考 6 · 工具 9 · 6:21</span><i class="i chev">&#xE70D;</i></div>
+    <div class="bd">
+     <div class="stp tap"><div class="rl"><div class="n fd"><i class="i">&#xE712;</i></div></div><div class="sc"><div class="sl"><b style="color:var(--accent-t)">显示前面 11 步</b></div><div class="sub">思考 4 · 工具 7 · 读取 5 个文件 · 运行 2 条命令</div></div></div>
+     <div class="stp tap"><div class="rl"><div class="n th"><i class="i">&#xE82F;</i></div></div><div class="sc"><div class="sl" style="color:var(--think)">思考 · 9 秒</div><div class="tt">快照里同一个 sequence 下有两条投影事件，按 sequence 去重会丢掉第二条。改成按 item id 和 revision 合并，cursor 只用来推进进度。</div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE70F;</i></div></div><div class="sc"><div class="sl"><b class="mono">Models/RemoteModels.cs</b><i class="i ok">&#xE73E;</i></div><div class="sub">修改文件 · <span class="add">+31</span> <span class="del">−12</span></div></div></div>
+     <div class="stp"><div class="rl"><div class="n to"><i class="i">&#xE756;</i></div></div><div class="sc"><div class="sl"><b class="mono">dotnet run --project tests\ProtocolTests</b><i class="i ok">&#xE73E;</i></div><div class="sub">命令 · 11 / 11 通过 · 15 秒</div></div></div>
+     <div class="stp"><div class="rl"><div class="n no"></div></div><div class="sc"><div class="nt">合并逻辑改好了，测试通过。接下来把时间线拆成用户、思考、工具、输出四种模板。</div></div></div>
+     <div class="stp open"><div class="rl"><div class="n th"><i class="i">&#xE82F;</i></div></div><div class="sc"><div class="sl" style="color:var(--think)">正在思考 · 9 秒<span class="ring th"></span></div><div class="tt">可以用 DataTemplateSelector 按 type、role 和 content.kind 选模板。思考和工具放进同一条轨道，所以 ListView 的每一项应该是一整轮，而不是一条消息<span class="caret" style="background:var(--think)"></span></div></div></div>
+    </div>
+   </div>
+  </div></div>
+  <div class="cmp">
+   <div class="runbar"><span class="ring th"></span><b>正在思考</b>第 16 步 · 6:21<button class="btn"><i class="i" style="font-size:12px">&#xE71A;</i>打断</button></div>
+   <div class="row"><button><i class="i">&#xE723;</i></button><div class="tb">追加到当前任务</div><button class="steer" style="color:var(--ml)"><i class="i">&#xE724;</i>追加</button></div>
+   <div class="cb min"><button class="more">•••</button></div>
+  </div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+ </div>
+ <ul>
+  <li>运行中的轮只显示最近 5 步，更早的步骤收成“显示前面 11 步”，并附带摘要。</li>
+  <li>正在进行的步骤实时展开并显示光标，结束后自动收回成两行预览。</li>
+  <li>停在底部时自动跟随新内容；往上翻阅时不会被拉回。</li>
+ </ul>
+</div>
+
+<!-- 05 审批 -->
+<div class="spec">
+ <div class="lbl">05 审批<span>时间线块 + ContentDialog</span></div>
+ <div class="phone">
+  <div class="sys"><span><i class="i">&#xE870;</i><i class="i">&#xE701;</i></span><span><i class="i">&#xE83F;</i>10:38</span></div>
+  <div class="pt">重做移动端界面<small>等待你批准</small></div>
+  <div class="ph"><span class="on">对话</span><span>文件</span><span>终端</span></div>
+  <div class="scroll"><div class="tl">
+   <div class="out"><div class="meta">Agent · 10:37</div><div class="body"><p>先读一下现有页面结构，确认哪些控件被 code-behind 引用。</p></div></div>
+   <div class="ask"><div class="t"><i class="i">&#xE83D;</i>需要你批准</div><div style="font-size:15px;margin-top:4px">请求读取文件</div><div class="p">AgentsAnywhere.Mobile/MainPage.xaml</div><button class="btn">查看详情</button></div>
+  </div></div>
+  <div class="cmp">
+   <div class="row"><button><i class="i">&#xE723;</i></button><div class="tb">输入任务或回复</div><button class="send dis"><i class="i">&#xE724;</i></button></div>
+   <div class="cb min"><button class="more">•••</button></div>
+  </div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+  <div class="shade"></div>
+  <div class="dlg">
+   <h3>请求读取文件 <span class="tag">仅此一次</span></h3>
+   <div class="k">文件</div><div class="v mono">AgentsAnywhere.Mobile/MainPage.xaml</div>
+   <div class="k">原因</div><div class="v">读取现有实现，检查哪些控件被 code-behind 引用。</div>
+   <div class="k">工作目录</div><div class="v mono" style="color:var(--mid)">D:\src\agents-anywhere-uwp</div>
+   <div style="margin-top:12px"><span class="link" style="font-size:14px">查看原始请求</span></div>
+   <div class="btns"><button class="btn">拒绝</button><button class="btn acc">允许一次</button></div>
+  </div>
+ </div>
+ <ul>
+  <li>审批详情用 ContentDialog，在手机上贴顶全宽显示；页面其余部分变暗，按系统返回键等于关闭，不会被当作拒绝。</li>
+  <li>按钮文字直接取自 notice 的 actions；提交中显示点状进度并禁用按钮。</li>
+  <li>需要填写内容的请求打开整页表单，沿用 SchemaForm 校验。</li>
+ </ul>
+</div>
+
+<!-- 06 更多菜单 + 会话设置 -->
+<div class="spec">
+ <div class="lbl">06 会话设置<span>由 ••• 进入</span></div>
+ <div class="phone">
+  <div class="sys"><span><i class="i">&#xE870;</i><i class="i">&#xE701;</i></span><span><i class="i">&#xE83F;</i>10:45</span></div>
+  <div class="hdr"><small>修复手机登录</small><b>会话设置</b></div>
+  <div class="scroll">
+   <div style="padding:0 12px">
+    <div class="fld" style="margin-top:4px"><label>模型</label><div class="cmb">gpt-5-codex<i class="i">&#xE70D;</i></div></div>
+    <div class="fld"><label>推理强度</label><div class="cmb">高<i class="i">&#xE70D;</i></div></div>
+    <div class="fld"><label>权限</label><div class="cmb">工作区写入<i class="i">&#xE70D;</i></div><div class="note" style="margin-top:4px">可以修改工作目录内的文件。</div></div>
+   </div>
+   <div class="sec">会话</div>
+   <div style="padding:6px 12px 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn">重命名</button><button class="btn">归档</button><button class="btn dis">接管控制</button></div>
+   <div class="note" style="padding:6px 12px 0">当前运行时不支持接管控制。</div>
+   <div class="sec">会话命令</div>
+   <div class="li"><i class="i g">&#xE943;</i><div class="c"><b>/compact</b><small>压缩上下文</small></div></div>
+   <div class="li"><i class="i g">&#xE943;</i><div class="c"><b>/review</b><small>审查当前改动</small></div></div>
+   <div class="sec">工作环境</div>
+   <div class="li"><i class="i g">&#xE977;</i><div class="c"><b>Studio PC</b><small>Windows · 在线</small></div></div>
+   <div class="li"><i class="i g">&#xE8B7;</i><div class="c"><b>工作目录</b><small class="mono">D:\src\agents-anywhere-uwp</small></div></div>
+  </div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+ </div>
+ <ul>
+  <li>页面写法沿用系统“设置”：小号上级标题，下面是大号细体页名。</li>
+  <li>模型、推理强度、权限是带标题的 ComboBox，在手机上打开全屏选择页；选中后立即提交，不再需要“应用设置”按钮。</li>
+  <li>不可用的操作保留并变灰，下面写原因。</li>
+  <li>会话页 <code>•••</code> 展开后的菜单见右侧 06-B。</li>
+ </ul>
+</div>
+
+<!-- 06-B CommandBar 展开 -->
+<div class="spec">
+ <div class="lbl">06-B 更多命令<span>会话页 CommandBar 展开</span></div>
+ <div class="phone">
+  <div class="sys"><span><i class="i">&#xE870;</i><i class="i">&#xE701;</i></span><span><i class="i">&#xE83F;</i>10:44</span></div>
+  <div class="pt">修复手机登录<small>Studio PC · 在线</small></div>
+  <div class="ph"><span class="on">对话</span><span>文件</span><span>终端</span></div>
+  <div class="scroll"><div class="tl">
+   <div class="out"><div class="meta">Agent · 10:33</div><div class="body"><p>已修正登录校验，并补上错误提示。问题是客户端直接发送了明文密码，服务端要求的是派生校验值。</p></div><div class="done"><i class="i">&#xE73E;</i>已完成 · 用时 1 分 12 秒</div></div>
+  </div></div>
+  <div class="cmp"><div class="row"><button><i class="i">&#xE723;</i></button><div class="tb">输入任务或回复</div><button class="send dis"><i class="i">&#xE724;</i></button></div><div class="cb min"><button class="more">•••</button></div></div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+  <div class="shade"></div>
+  <div class="cbx">
+   <div class="row"><button><i class="i">&#xE723;</i>附件</button><button><i class="i">&#xE72C;</i>刷新</button><button><i class="i">&#xE713;</i>设置</button><button class="more">•••</button></div>
+   <div class="menu"><div>会话命令</div><div>重命名</div><div>归档</div><div class="dis">接管控制</div><div>复制会话链接</div></div>
+  </div>
+ </div>
+ <ul>
+  <li>标准的 CommandBar 展开效果：图标下方出现文字，次要命令在下面列出。</li>
+  <li>文件和终端已经在 Pivot 里，不再出现在菜单中。</li>
+  <li>菜单项是否可用，按会话的有效能力决定。</li>
+ </ul>
+</div>
+
+<!-- 07 文件 -->
+<div class="spec">
+ <div class="lbl">07 文件<span>会话 Pivot · 文件</span></div>
+ <div class="phone">
+  <div class="sys"><span><i class="i">&#xE870;</i><i class="i">&#xE701;</i></span><span><i class="i">&#xE83F;</i>10:46</span></div>
+  <div class="pt">修复手机登录<small>Studio PC · 在线</small></div>
+  <div class="ph"><span>对话</span><span class="on">文件</span><span>终端</span></div>
+  <div class="crumb">工作目录 › AgentsAnywhere.Mobile › <b>Services</b></div>
+  <div class="scroll">
+   <div class="fi"><i class="i g" style="color:var(--accent-t)">&#xE8B7;</i><div class="c"><b>Diagnostics</b><small>文件夹 · 3 项</small></div></div>
+   <div class="fi on"><i class="i g">&#xE8A5;</i><div class="c"><b>AuthService.cs</b><small>12.4 KB · 10:33</small></div></div>
+   <div class="fi"><i class="i g">&#xE8A5;</i><div class="c"><b>ApiClient.cs</b><small>18.1 KB · 昨天</small></div></div>
+   <div class="fi"><i class="i g">&#xE8A5;</i><div class="c"><b>RealtimeSocket.cs</b><small>9.6 KB · 昨天</small></div></div>
+   <div class="fi"><i class="i g">&#xE8A5;</i><div class="c"><b>TerminalBuffer.cs</b><small>7.2 KB · 10月8日</small></div></div>
+   <div class="fi"><i class="i g">&#xE8A5;</i><div class="c"><b>SchemaForm.cs</b><small>6.3 KB · 10月7日</small></div></div>
+  </div>
+  <div class="cb"><button><i class="i">&#xE890;</i></button><button><i class="i">&#xE70F;</i></button><button><i class="i">&#xE896;</i></button><button class="more">•••</button></div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+ </div>
+ <ul>
+  <li>样式沿用系统“文件资源管理器”：文件夹用强调色图标，路径显示在列表上方。</li>
+  <li>系统返回键先回到上一级目录，到达工作目录根部后再离开页面。</li>
+  <li>CommandBar：预览、编辑、下载；<code>•••</code> 里有上传和刷新。选中文件后这些命令才可用。</li>
+  <li>编辑页保存冲突（412）时，提示文件已在别处修改，并提供重新加载，不会直接覆盖。</li>
+ </ul>
+</div>
+
+<!-- 08 终端 -->
+<div class="spec">
+ <div class="lbl">08 终端<span>会话 Pivot · 终端</span></div>
+ <div class="phone">
+  <div class="sys"><span><i class="i">&#xE870;</i><i class="i">&#xE701;</i></span><span><i class="i">&#xE83F;</i>10:47</span></div>
+  <div class="pt">修复手机登录<small>终端已连接 · 46 × 22</small></div>
+  <div class="ph"><span>对话</span><span>文件</span><span class="on">终端</span></div>
+  <div class="term"><span class="d">PowerShell 7.5 · D:\src\agents-anywhere-uwp</span>
+<span class="g">PS&gt;</span> git status --short
+ M Services/AuthService.cs
+ M tests/ProtocolTests/LoginTests.cs
+<span class="g">PS&gt;</span> dotnet build -c Release
+  AgentsAnywhere.Core -&gt; bin\Release\Core.dll
+<span class="y">  warning CS0168: 声明了变量 ex，但从未使用</span>
+  已成功生成。
+<span class="g">PS&gt;</span> </div>
+  <div class="keys"><button style="color:var(--err-t)">Ctrl+C</button><button>Tab</button><button>Esc</button><button><i class="i" style="font-size:12px">&#xE74A;</i></button><button><i class="i" style="font-size:12px">&#xE74B;</i></button></div>
+  <div class="tin"><div class="tb">输入命令</div><button><i class="i">&#xE751;</i></button></div>
+  <div class="cb min" style="background:var(--chrome)"><button class="more">•••</button></div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+ </div>
+ <ul>
+  <li>控制键是一排直角按钮，常驻在软键盘上方。</li>
+  <li><code>•••</code> 里有“重新连接”和“关闭终端”；关闭前会确认。滑到其他 Pivot 不会关闭远程终端。</li>
+  <li>横屏时增加列数，并按新的 cols / rows 发送尺寸。</li>
+ </ul>
+</div>
+
+<!-- 09 我的 -->
+<div class="spec">
+ <div class="lbl">09 我的<span>根 Pivot · 我的</span></div>
+ <div class="phone">
+  <div class="sys"><span><i class="i">&#xE870;</i><i class="i">&#xE701;</i></span><span><i class="i">&#xE83F;</i>10:48</span></div>
+  <div class="pt">AGENTS ANYWHERE</div>
+  <div class="ph"><span>会话</span><span>设备</span><span class="on">我的</span></div>
+  <div class="scroll">
+   <div class="li" style="min-height:76px"><div class="avatar"><i class="i">&#xE77B;</i></div><div class="c"><b style="font-size:20px;font-weight:300">dev@example.com</b><small>官方云 · web.agents-anywhere.com</small></div></div>
+   <div class="li"><i class="i g">&#xE701;</i><div class="c"><b>实时连接</b><small>已连接 · 12 分钟</small></div></div>
+   <div class="li"><i class="i g">&#xE968;</i><div class="c"><b>服务器</b><small>官方云</small></div></div>
+   <div class="li"><i class="i g">&#xEBE8;</i><div class="c"><b>调试日志</b><small>已脱敏，不含账号、密码和令牌</small></div></div>
+   <div class="log">10:41:02Z ws dashboard open 54517B
+10:41:37Z ws close 1006 hr=0x80072EFE
+10:41:39Z ws reconnect #2 ticket=new</div>
+   <div class="li"><i class="i g">&#xE897;</i><div class="c"><b>使用文档</b></div></div>
+   <div class="li"><i class="i g">&#xE946;</i><div class="c"><b>关于与许可证</b><small>社区原生客户端 1.1.0 · MIT</small></div></div>
+   <div style="padding:8px 12px 16px"><button class="btn">退出登录</button></div>
+  </div>
+  <div class="nav"><i class="i">&#xE72B;</i><span class="win"><b></b><b></b><b></b><b></b></span><i class="i">&#xE721;</i></div>
+ </div>
+ <ul>
+  <li>列表沿用系统“设置”：左侧强调色图标，标题下方是灰色说明。</li>
+  <li>调试日志打开后是整页，带复制和清空；日志不会自动上传。</li>
+  <li>退出登录用 ContentDialog 确认。</li>
+ </ul>
+</div>
+
+</main>
+
+<script>
+document.querySelectorAll('[data-p]').forEach(function (el) {
+ el.querySelector('.hd').addEventListener('click', function () { el.classList.toggle('open'); });
+});
+document.querySelectorAll('.stp.tap').forEach(function (el) {
+ el.querySelector('.sc').addEventListener('click', function () { el.classList.toggle('open'); });
+});
+document.querySelectorAll('[data-bottom]').forEach(function (el) { el.scrollTop = el.scrollHeight; });
+document.querySelectorAll('.accents button').forEach(function (b) {
+ b.addEventListener('click', function () {
+  var v = b.getAttribute('data-a').split(','), s = document.documentElement.style;
+  s.setProperty('--accent', v[0]); s.setProperty('--accent-t', v[1]); s.setProperty('--accent-bg', v.slice(2).join(','));
+  document.querySelectorAll('.accents button').forEach(function (x) { x.classList.toggle('on', x === b); });
+ });
+});
+</script>
+</body>
+</html>
